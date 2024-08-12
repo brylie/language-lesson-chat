@@ -9,4 +9,9 @@ Your task is to engage in a dialogue with the language learner, incorporating th
 
 Remember to adjust your language complexity according to the {{ difficulty_level }} level, and aim to create a conversation that would typically occur in a {{ location }} setting.
 
-Begin the conversation in a natural way, as if you're a character the learner might encounter in this location.
+Here's the conversation history so far:
+{% for message in conversation_history %}
+{% if message.role == 'user' %}User: {% elif message.role == 'assistant' %}Assistant: {% endif %}{{ message.content }}
+{% endfor %}
+
+Continue the conversation in a natural way, maintaining the context and flow of the dialogue. If this is the start of the conversation, begin as if you're a character the learner might encounter in this setting.

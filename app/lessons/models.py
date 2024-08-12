@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -84,6 +85,7 @@ class Lesson(Page, ClusterableModel):
             'location': self.location,
             'system_prompt': self.llm_system_prompt,
             'key_concepts': [concept.concept for concept in self.key_concepts.all()],
+            'conversation_history': request.session.get('conversation_history', [])
         }
         context['llm_prompt'] = render_to_string(
             'lessons/prompt_template.txt', prompt_context)
@@ -93,14 +95,19 @@ class Lesson(Page, ClusterableModel):
     def serve(self, request):
         if request.method == 'POST':
             user_message = request.POST.get('user_message', '')
-            llm_response = self.get_llm_response(user_message)
+            llm_response = self.get_llm_response(request, user_message)
             return HttpResponse(llm_response)
         return super().serve(request)
 
-    def get_llm_response(self, user_message):
-        prompt = self.get_context(None)['llm_prompt']
+    def get_llm_response(self, request, user_message):
+        # Get the conversation history from the session
+        conversation_history = request.session.get('conversation_history', [])
+
+        # Prepare the prompt with conversation history
+        prompt = self.get_context(request)['llm_prompt']
         messages = [
             {"role": "system", "content": prompt},
+        ] + conversation_history + [
             {"role": "user", "content": user_message}
         ]
 
@@ -109,7 +116,21 @@ class Lesson(Page, ClusterableModel):
                 model="gpt-3.5-turbo",
                 messages=messages
             )
-            return response.choices[0].message['content']
+            assistant_response = response.choices[0].message['content']
+
+            # Update conversation history
+            conversation_history.append(
+                {"role": "user", "content": user_message})
+            conversation_history.append(
+                {"role": "assistant", "content": assistant_response})
+
+            # Limit conversation history to last 10 messages (adjust as needed)
+            conversation_history = conversation_history[-10:]
+
+            # Save updated history to session
+            request.session['conversation_history'] = conversation_history
+
+            return assistant_response
         except Exception as e:
             return f"An error occurred: {str(e)}"
 
