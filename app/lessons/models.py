@@ -16,6 +16,10 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
+# Define the character limit constant
+MAX_MESSAGE_LENGTH = 150
+
+
 class Suggestion(BaseModel):
     text: str
     explanation: str
@@ -95,6 +99,7 @@ class Lesson(Page, ClusterableModel):
     def get_context(self, request):
         context = super().get_context(request)
         context["key_concepts"] = self.key_concepts.all()
+        context['max_message_length'] = MAX_MESSAGE_LENGTH
 
         # Generate the LLM prompt
         prompt_context = {
@@ -113,11 +118,18 @@ class Lesson(Page, ClusterableModel):
     def serve(self, request):
         if request.method == "POST":
             if 'start_over' in request.POST:
-                # Clear the conversation history
                 request.session['conversation_history'] = []
                 return JsonResponse({'status': 'success'})
 
             user_message = request.POST.get("user_message", "")
+
+            # Server-side validation of message length
+            if len(user_message) > MAX_MESSAGE_LENGTH:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Message exceeds maximum length of {MAX_MESSAGE_LENGTH} characters.'
+                }, status=400)
+
             llm_response = self.get_llm_response(request, user_message)
             return HttpResponse(llm_response)
         return super().serve(request)
