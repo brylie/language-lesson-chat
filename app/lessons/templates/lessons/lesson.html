@@ -12,7 +12,7 @@
 
             {% if page.cover_photo %}
                 <div class="mb-4">
-                    {% image page.cover_photo fill-800x400 class="img-fluid rounded" %}
+                    {% image page.cover_photo fill-800x400 class="img-fluid rounded" alt="Cover image for {{ page.title }}" %}
                 </div>
             {% endif %}
 
@@ -20,11 +20,11 @@
                 {{ page.intro|richtext }}
             </div>
 
-            <div id="chat-interface" class="border rounded p-3">
-                <h3>Practice Dialogue</h3>
+            <section id="chat-interface" class="border rounded p-3">
+                <h2>Practice Dialogue</h2>
                 <!-- HTMX chat interface will be added here -->
                 <p class="text-muted">Chat interface coming soon...</p>
-            </div>
+            </section>
         </div>
 
         <!-- Sidebar -->
@@ -35,10 +35,12 @@
                         Toggle Lesson Info
                     </button>
                     <div class="collapse show" id="sidebarContent">
-                        <h5>Lesson Info</h5>
+                        <h2>Lesson Info</h2>
+                        <h3>Details</h3>
+                        <p><strong>Location:</strong> {{ page.location }}</p>
                         <p><strong>Difficulty Level:</strong> <span class="badge bg-primary">{{ page.get_difficulty_level_display }}</span></p>
                         <p><strong>Estimated Time:</strong> {{ page.estimated_time }} minutes</p>
-                        <h5>Key Concepts</h5>
+                        <h3>Key Concepts</h3>
                         <ul class="list-unstyled">
                             {% for concept in page.key_concepts.all %}
                                 <li><span class="badge bg-secondary">{{ concept.concept }}</span></li>
