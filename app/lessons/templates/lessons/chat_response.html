@@ -1,0 +1,17 @@
+{% if error %}
+    <div class="assistant-message">
+        {{ error }}
+    </div>
+{% else %}
+    <div class="assistant-message">
+        {{ assistant_message }}
+    </div>
+    {% if suggestions %}
+        <div class="suggestions">
+            <strong>Suggested responses:</strong><br>
+            {% for suggestion in suggestions %}
+                <span class="suggestion" title="{{ suggestion.explanation }}" hx-on="click: document.getElementById('user-message-input').value = '{{ suggestion.text|escapejs }}'; document.getElementById('user-message-input').focus();">{{ suggestion.text }}</span><br>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}
