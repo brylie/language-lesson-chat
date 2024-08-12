@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Main content area -->
+        <div class="col-12 col-md-9 order-2 order-md-1" id="main-content">
+            <h1 class="mb-4">{{ page.title }}</h1>
+
+            {% if page.cover_photo %}
+                <div class="mb-4">
+                    {% image page.cover_photo fill-800x400 class="img-fluid rounded" %}
+                </div>
+            {% endif %}
+
+            <div class="mb-4">
+                {{ page.intro|richtext }}
+            </div>
+
+            <div id="chat-interface" class="border rounded p-3">
+                <h3>Practice Dialogue</h3>
+                <!-- HTMX chat interface will be added here -->
+                <p class="text-muted">Chat interface coming soon...</p>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-12 col-md-3 order-1 order-md-2 mb-3 mb-md-0" id="sidebar">
+            <div class="card">
+                <div class="card-body">
+                    <button class="btn btn-sm btn-secondary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarContent" aria-expanded="true" aria-controls="sidebarContent">
+                        Toggle Lesson Info
+                    </button>
+                    <div class="collapse show" id="sidebarContent">
+                        <h5>Lesson Info</h5>
+                        <p><strong>Difficulty Level:</strong> <span class="badge bg-primary">{{ page.get_difficulty_level_display }}</span></p>
+                        <p><strong>Estimated Time:</strong> {{ page.estimated_time }} minutes</p>
+                        <h5>Key Concepts</h5>
+                        <ul class="list-unstyled">
+                            {% for concept in page.key_concepts.all %}
+                                <li><span class="badge bg-secondary">{{ concept.concept }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (max-width: 767.98px) {
+        #sidebar {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
