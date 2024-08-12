@@ -1,10 +1,12 @@
 from django.db import models
+from django.http import HttpResponse
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
+from litellm import completion
 
 
 class KeyConcept(models.Model):
@@ -87,6 +89,29 @@ class Lesson(Page, ClusterableModel):
             'lessons/prompt_template.txt', prompt_context)
 
         return context
+
+    def serve(self, request):
+        if request.method == 'POST':
+            user_message = request.POST.get('user_message', '')
+            llm_response = self.get_llm_response(user_message)
+            return HttpResponse(llm_response)
+        return super().serve(request)
+
+    def get_llm_response(self, user_message):
+        prompt = self.get_context(None)['llm_prompt']
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": user_message}
+        ]
+
+        try:
+            response = completion(
+                model="gpt-3.5-turbo",
+                messages=messages
+            )
+            return response.choices[0].message['content']
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
 
     class Meta:
         verbose_name = "Language Lesson"
