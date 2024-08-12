@@ -15,7 +15,7 @@
                     <div class="image-container">
                         {% image page.cover_photo width-1200 class="img-fluid rounded w-100" alt="Cover image for {{ page.title }}" %}
                     </div>
-                    <div id="chat-bubble" class="chat-bubble d-none">
+                    <div id="chat-bubble" class="chat-bubble">
                         <div id="chat-content"></div>
                     </div>
                     <div id="chat-throbber" class="chat-throbber d-none">
@@ -33,7 +33,7 @@
             <section id="chat-interface" class="border rounded p-3">
                 <h2>Practice Dialogue</h2>
                 <form id="chat-form" hx-post="{{ page.url }}" 
-                      hx-target="#chat-content" 
+                      hx-target="#chat-content"
                       hx-swap="innerHTML"
                       class="mt-3">
                     {% csrf_token %}
@@ -81,8 +81,9 @@
     }
     .image-container {
         width: 100%;
-        max-height: 600px; /* Adjust this value as needed */
+        max-height: 600px;
         overflow: hidden;
+        position: relative;
     }
     .image-container img {
         width: 100%;
@@ -109,6 +110,20 @@
         align-items: center;
         height: 60px;
     }
+    .assistant-message {
+        margin-bottom: 10px;
+    }
+    .suggestions {
+        margin-top: 10px;
+    }
+    .suggestion {
+        cursor: pointer;
+        padding: 5px 10px;
+        margin: 5px 0;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        display: inline-block;
+    }
 </style>
 {% endblock %}
 
@@ -134,6 +149,14 @@
             // Hide throbber and show chat bubble
             chatThrobber.classList.add('d-none');
             chatBubble.classList.remove('d-none');
+        });
+
+        // Event delegation for suggestion clicks
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('suggestion')) {
+                userMessageInput.value = event.target.textContent;
+                userMessageInput.focus();
+            }
         });
     });
 </script>

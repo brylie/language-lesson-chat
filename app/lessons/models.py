@@ -8,6 +8,22 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 import os
 from openai import OpenAI
+import logging
+from pydantic import BaseModel
+from typing import List
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+
+class Suggestion(BaseModel):
+    text: str
+    explanation: str
+
+
+class ChatResponse(BaseModel):
+    assistant_message: str
+    suggestions: List[Suggestion]
 
 
 class KeyConcept(models.Model):
@@ -103,58 +119,66 @@ class Lesson(Page, ClusterableModel):
 
     def get_llm_response(self, request, user_message):
         # Get the conversation history from the session
-        conversation_history = request.session.get("conversation_history", [])
+        conversation_history = request.session.get('conversation_history', [])
 
         # Prepare the prompt with conversation history
-        prompt = self.get_context(request)["llm_prompt"]
-        messages = (
-            [
-                {"role": "system", "content": prompt},
-            ]
-            + conversation_history
-            + [{"role": "user", "content": user_message}]
-        )
+        prompt = self.get_context(request)['llm_prompt']
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "system", "content": "After responding to the user, provide 33 suggestions for how they could respond in this situation. These suggestions should be appropriate for the context and help the user learn common phrases and responses."},
+        ] + conversation_history + [
+            {"role": "user", "content": user_message}
+        ]
 
         try:
             client = OpenAI(
                 api_key=os.environ.get("OPENAI_API_KEY"),
             )
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo", messages=messages
+            completion = client.beta.chat.completions.parse(
+                model="gpt-4o-2024-08-06",
+                messages=messages,
+                response_format=ChatResponse
             )
-            assistant_response = response.choices[0].message.content
+
+            chat_response = completion.choices[0].message
+
+            if chat_response.refusal:
+                logger.warning(f"OpenAI API refusal: {chat_response.refusal}")
+                return HttpResponse(
+                    render_to_string('lessons/chat_response.html', {
+                        'error': "I'm sorry, but I can't respond to that request. Please try a different question or topic."
+                    })
+                )
+
+            response_data = chat_response.parsed
 
             # Update conversation history
-            conversation_history.append({"role": "user", "content": user_message})
             conversation_history.append(
-                {"role": "assistant", "content": assistant_response}
-            )
+                {"role": "user", "content": user_message})
+            conversation_history.append(
+                {"role": "assistant", "content": response_data.assistant_message})
 
             # Limit conversation history to last 10 messages (adjust as needed)
             conversation_history = conversation_history[-10:]
 
             # Save updated history to session
-            request.session["conversation_history"] = conversation_history
+            request.session['conversation_history'] = conversation_history
 
-            return assistant_response
+            # Render the response template
+            html_response = render_to_string('lessons/chat_response.html', {
+                'assistant_message': response_data.assistant_message,
+                'suggestions': response_data.suggestions,
+            })
 
-        except RateLimitError as e:
-            logger.error(f"OpenAI API rate limit exceeded: {str(e)}")
-            return "I'm sorry, but I'm receiving too many requests right now. Please try again in a moment."
-
-        except Timeout as e:
-            logger.error(f"OpenAI API request timed out: {str(e)}")
-            return (
-                "I'm sorry, but the request is taking too long. Please try again later."
-            )
-
-        except APIError as e:
-            logger.error(f"OpenAI API error occurred: {str(e)}")
-            return "I'm having trouble understanding right now. Please try rephrasing your message."
+            return HttpResponse(html_response)
 
         except Exception as e:
             logger.error(f"Unexpected error in get_llm_response: {str(e)}")
-            return "An unexpected error occurred. Please try again later or contact support if the problem persists."
+            return HttpResponse(
+                render_to_string('lessons/chat_response.html', {
+                    'error': "An unexpected error occurred. Please try again later or contact support if the problem persists."
+                })
+            )
 
     class Meta:
         verbose_name = "Language Lesson"
