@@ -1,4 +1,3 @@
-import json
 from django.db import models
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -7,7 +6,8 @@ from wagtail.fields import RichTextField
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from litellm import completion
+import os
+from openai import OpenAI
 
 
 class KeyConcept(models.Model):
@@ -112,11 +112,14 @@ class Lesson(Page, ClusterableModel):
         ]
 
         try:
-            response = completion(
+            client = OpenAI(
+                api_key=os.environ.get("OPENAI_API_KEY"),
+            )
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=messages
             )
-            assistant_response = response.choices[0].message['content']
+            assistant_response = response.choices[0].message.content
 
             # Update conversation history
             conversation_history.append(
