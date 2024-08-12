@@ -1,0 +1,30 @@
+{
+	"name": "Python 3",
+	"image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
+		"ghcr.io/devcontainers-contrib/features/ruff:1": {}
+	},
+	"postCreateCommand": "pip install --user -r app/requirements.txt",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bibhasdn.django-html",
+				"batisteo.vscode-django",
+				"shamanu4.django-intellisense",
+				"ms-python.vscode-pylance",
+				"ms-python.python",
+				"ms-python.debugpy",
+				"charliermarsh.ruff",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
+			],
+			"settings": {
+				"editor.defaultFormatter": "charliermarsh.ruff",
+				"ruff.formatOnSave": true,
+				"ruff.formatOnPaste": true
+			}
+		}
+	}
+}
