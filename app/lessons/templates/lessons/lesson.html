@@ -42,6 +42,7 @@
                         <button class="btn btn-primary" type="submit">Send</button>
                     </div>
                 </form>
+                <button id="start-over-btn" class="btn btn-secondary mt-3">Start Over</button>
             </section>
         </div>
 
@@ -134,19 +135,17 @@
         const chatForm = document.getElementById('chat-form');
         const userMessageInput = document.getElementById('user-message-input');
         const chatBubble = document.getElementById('chat-bubble');
+        const chatContent = document.getElementById('chat-content');
         const chatThrobber = document.getElementById('chat-throbber');
+        const startOverBtn = document.getElementById('start-over-btn');
 
         chatForm.addEventListener('htmx:beforeRequest', function(event) {
-            // Clear the input field
             userMessageInput.value = '';
-
-            // Hide chat bubble and show throbber
             chatBubble.classList.add('d-none');
             chatThrobber.classList.remove('d-none');
         });
 
         chatForm.addEventListener('htmx:afterRequest', function(event) {
-            // Hide throbber and show chat bubble
             chatThrobber.classList.add('d-none');
             chatBubble.classList.remove('d-none');
         });
@@ -157,6 +156,30 @@
                 userMessageInput.value = event.target.textContent;
                 userMessageInput.focus();
             }
+        });
+
+        // Start Over functionality
+        startOverBtn.addEventListener('click', function() {
+            fetch('{{ page.url }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'start_over=true'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Clear the chat content
+                    chatContent.innerHTML = '<p>Conversation has been reset. You can start a new dialogue now.</p>';
+                    // Show the chat bubble if it was hidden
+                    chatBubble.classList.remove('d-none');
+                    // Hide the throbber if it was visible
+                    chatThrobber.classList.add('d-none');
+                }
+            })
+            .catch(error => console.error('Error:', error));
         });
     });
 </script>

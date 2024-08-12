@@ -1,5 +1,5 @@
 from django.db import models
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -112,6 +112,11 @@ class Lesson(Page, ClusterableModel):
 
     def serve(self, request):
         if request.method == "POST":
+            if 'start_over' in request.POST:
+                # Clear the conversation history
+                request.session['conversation_history'] = []
+                return JsonResponse({'status': 'success'})
+
             user_message = request.POST.get("user_message", "")
             llm_response = self.get_llm_response(request, user_message)
             return HttpResponse(llm_response)
