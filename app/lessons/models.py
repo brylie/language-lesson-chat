@@ -22,7 +22,6 @@ MAX_MESSAGE_LENGTH = 150
 
 class Suggestion(BaseModel):
     text: str
-    explanation: str
 
 
 class ChatResponse(BaseModel):
@@ -142,7 +141,7 @@ class Lesson(Page, ClusterableModel):
         prompt = self.get_context(request)['llm_prompt']
         messages = [
             {"role": "system", "content": prompt},
-            {"role": "system", "content": "After responding to the user, provide 33 suggestions for how they could respond in this situation. These suggestions should be appropriate for the context and help the user learn common phrases and responses."},
+            {"role": "system", "content": "After responding to the user, provide two or three suggestions for how they could respond in this situation. These suggestions should be appropriate for the context and help the user learn common phrases and responses."},
         ] + conversation_history + [
             {"role": "user", "content": user_message}
         ]
