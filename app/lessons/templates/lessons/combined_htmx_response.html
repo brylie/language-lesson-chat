@@ -7,7 +7,7 @@
         <div class="assistant-message">
             {{ assistant_message }}
         </div>
-        {% if addressed_key_concept != no_key_concept %}
+        {% if addressed_key_concept in valid_key_concepts and addressed_key_concept != no_key_concept %}
             <div class="key-concept-used">
                 Key Concept: {{ addressed_key_concept }}
             </div>

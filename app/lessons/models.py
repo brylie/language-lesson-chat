@@ -194,10 +194,12 @@ class Lesson(Page, ClusterableModel):
 
             response_data = chat_response.parsed
 
-            # Validate key concept
+            # Get valid key concepts
             valid_key_concepts = [
                 concept.concept for concept in self.key_concepts.all()]
-            if response_data.addressed_key_concept not in valid_key_concepts and response_data.addressed_key_concept != NO_KEY_CONCEPT:
+
+            # Validate key concept
+            if response_data.addressed_key_concept not in valid_key_concepts:
                 logger.warning(f"Invalid key concept: {
                                response_data.addressed_key_concept}")
                 response_data.addressed_key_concept = NO_KEY_CONCEPT
@@ -224,6 +226,8 @@ class Lesson(Page, ClusterableModel):
                 'suggestions': response_data.suggestions,
                 'addressed_key_concept': response_data.addressed_key_concept,
                 'addressed_key_concepts': addressed_key_concepts,
+                'valid_key_concepts': valid_key_concepts,
+                'no_key_concept': NO_KEY_CONCEPT,
             })
 
             return HttpResponse(combined_response)
