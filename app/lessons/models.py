@@ -63,6 +63,10 @@ class Lesson(Page, ClusterableModel):
         max_length=100,
         help_text="Specify the location or setting for this lesson (e.g., 'Coffee Shop', 'Airport', 'Art Gallery'). This will be used to set the context for the AI dialogue.",
     )
+    language = models.CharField(
+        max_length=100,
+        help_text="Specify the target language for this lesson (e.g., 'English', 'Spanish', 'French'). This will help the AI assistant provide appropriate responses and suggestions.",
+    )
     difficulty_level = models.CharField(
         max_length=20,
         choices=[
@@ -89,6 +93,7 @@ class Lesson(Page, ClusterableModel):
         FieldPanel("intro"),
         FieldPanel("cover_photo"),
         FieldPanel("location"),
+        FieldPanel("language"),
         FieldPanel("difficulty_level"),
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
