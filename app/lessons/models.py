@@ -9,15 +9,17 @@ from modelcluster.models import ClusterableModel
 import os
 from openai import OpenAI
 import logging
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ValidationError
 from typing import List
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-
 # Define the character limit constant
 MAX_MESSAGE_LENGTH = 150
+
+# Define the constant for responses without a key concept
+NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
 
 
 class Suggestion(BaseModel):
@@ -27,6 +29,8 @@ class Suggestion(BaseModel):
 class ChatResponse(BaseModel):
     assistant_message: str
     suggestions: List[Suggestion]
+    addressed_key_concept: str = Field(
+        ..., description=f"The single key concept addressed in this response, or '{NO_KEY_CONCEPT}' if none was used")
 
 
 class KeyConcept(models.Model):
@@ -121,6 +125,7 @@ class Lesson(Page, ClusterableModel):
             "system_prompt": self.llm_system_prompt,
             "key_concepts": [concept.concept for concept in self.key_concepts.all()],
             "conversation_history": request.session.get("conversation_history", []),
+            "language": self.language,
         }
         context["llm_prompt"] = render_to_string(
             "lessons/prompt_template.txt", prompt_context
@@ -131,8 +136,19 @@ class Lesson(Page, ClusterableModel):
     def serve(self, request):
         if request.method == "POST":
             if 'start_over' in request.POST:
+                # Reset the conversation history and addressed key concepts
                 request.session['conversation_history'] = []
-                return JsonResponse({'status': 'success'})
+                request.session['addressed_key_concepts'] = []
+
+                # Render the reset response
+                reset_response = render_to_string('lessons/combined_htmx_response.html', {
+                    'page': self,
+                    'assistant_message': 'Conversation has been reset. You can start a new dialogue now.',
+                    'suggestions': [],
+                    'addressed_key_concept': '',
+                    'addressed_key_concepts': [],
+                })
+                return HttpResponse(reset_response)
 
             user_message = request.POST.get("user_message", "")
 
@@ -148,22 +164,18 @@ class Lesson(Page, ClusterableModel):
         return super().serve(request)
 
     def get_llm_response(self, request, user_message):
-        # Get the conversation history from the session
         conversation_history = request.session.get('conversation_history', [])
-
-        # Prepare the prompt with conversation history
+        addressed_key_concepts = request.session.get(
+            'addressed_key_concepts', [])
         prompt = self.get_context(request)['llm_prompt']
         messages = [
             {"role": "system", "content": prompt},
-            {"role": "system", "content": "After responding to the user, provide two or three suggestions for how they could respond in this situation. These suggestions should be appropriate for the context and help the user learn common phrases and responses."},
         ] + conversation_history + [
             {"role": "user", "content": user_message}
         ]
 
         try:
-            client = OpenAI(
-                api_key=os.environ.get("OPENAI_API_KEY"),
-            )
+            client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
             completion = client.beta.chat.completions.parse(
                 model="gpt-4o-2024-08-06",
                 messages=messages,
@@ -175,37 +187,62 @@ class Lesson(Page, ClusterableModel):
             if chat_response.refusal:
                 logger.warning(f"OpenAI API refusal: {chat_response.refusal}")
                 return HttpResponse(
-                    render_to_string('lessons/chat_response.html', {
+                    render_to_string('lessons/combined_htmx_response.html', {
                         'error': "I'm sorry, but I can't respond to that request. Please try a different question or topic."
                     })
                 )
 
             response_data = chat_response.parsed
 
+            # Get valid key concepts
+            valid_key_concepts = [
+                concept.concept for concept in self.key_concepts.all()]
+
+            # Validate key concept
+            if response_data.addressed_key_concept not in valid_key_concepts:
+                logger.warning(f"Invalid key concept: {
+                               response_data.addressed_key_concept}")
+                response_data.addressed_key_concept = NO_KEY_CONCEPT
+            elif response_data.addressed_key_concept != NO_KEY_CONCEPT and response_data.addressed_key_concept not in addressed_key_concepts:
+                addressed_key_concepts.append(
+                    response_data.addressed_key_concept)
+
             # Update conversation history
             conversation_history.append(
                 {"role": "user", "content": user_message})
             conversation_history.append(
                 {"role": "assistant", "content": response_data.assistant_message})
-
-            # Limit conversation history to last 10 messages (adjust as needed)
+            # Limit to last 10 messages
             conversation_history = conversation_history[-10:]
 
-            # Save updated history to session
+            # Update session variables
             request.session['conversation_history'] = conversation_history
+            request.session['addressed_key_concepts'] = addressed_key_concepts
 
-            # Render the response template
-            html_response = render_to_string('lessons/chat_response.html', {
+            # Render the combined response
+            combined_response = render_to_string('lessons/combined_htmx_response.html', {
+                'page': self,
                 'assistant_message': response_data.assistant_message,
                 'suggestions': response_data.suggestions,
+                'addressed_key_concept': response_data.addressed_key_concept,
+                'addressed_key_concepts': addressed_key_concepts,
+                'valid_key_concepts': valid_key_concepts,
+                'no_key_concept': NO_KEY_CONCEPT,
             })
 
-            return HttpResponse(html_response)
+            return HttpResponse(combined_response)
 
+        except ValidationError as e:
+            logger.error(f"Validation error in get_llm_response: {str(e)}")
+            return HttpResponse(
+                render_to_string('lessons/combined_htmx_response.html', {
+                    'error': "An error occurred while processing the response. Please try again."
+                })
+            )
         except Exception as e:
             logger.error(f"Unexpected error in get_llm_response: {str(e)}")
             return HttpResponse(
-                render_to_string('lessons/chat_response.html', {
+                render_to_string('lessons/combined_htmx_response.html', {
                     'error': "An unexpected error occurred. Please try again later or contact support if the problem persists."
                 })
             )
