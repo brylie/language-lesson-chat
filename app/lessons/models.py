@@ -37,9 +37,18 @@ class KeyConcept(models.Model):
         max_length=255,
         help_text="Enter a key language concept or vocabulary item for this lesson.",
     )
+    image = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Choose an image that represents the key concept. This will help the student visualize the concept.",
+    )
 
     panels = [
         FieldPanel("concept"),
+        FieldPanel("image"),
     ]
 
     def __str__(self):
