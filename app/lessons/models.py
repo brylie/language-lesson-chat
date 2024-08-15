@@ -134,9 +134,19 @@ class Lesson(Page, ClusterableModel):
     def serve(self, request):
         if request.method == "POST":
             if 'start_over' in request.POST:
+                # Reset the conversation history and addressed key concepts
                 request.session['conversation_history'] = []
                 request.session['addressed_key_concepts'] = []
-                return JsonResponse({'status': 'success'})
+
+                # Render the reset response
+                reset_response = render_to_string('lessons/combined_htmx_response.html', {
+                    'page': self,
+                    'assistant_message': 'Conversation has been reset. You can start a new dialogue now.',
+                    'suggestions': [],
+                    'addressed_key_concept': '',
+                    'addressed_key_concepts': [],
+                })
+                return HttpResponse(reset_response)
 
             user_message = request.POST.get("user_message", "")
 

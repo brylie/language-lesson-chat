@@ -1,5 +1,22 @@
+{% comment %}lessons/templates/lessons/combined_htmx_response.html{% endcomment %}
 <div hx-swap-oob="true" id="chat-content">
-    {% include "lessons/chat_response.html" with assistant_message=assistant_message suggestions=suggestions addressed_key_concept=addressed_key_concept %}
+    {% if error %}
+        <div class="assistant-message">
+            {{ error }}
+        </div>
+    {% else %}
+        <div class="assistant-message">
+            {{ assistant_message }}
+        </div>
+        {% if suggestions %}
+            <div class="suggestions">
+                <strong>Suggested responses:</strong><br>
+                {% for suggestion in suggestions %}
+                    <span class="suggestion" hx-on="click: document.getElementById('user-message-input').value = '{{ suggestion.text|escapejs }}'; document.getElementById('user-message-input').focus();">{{ suggestion.text }}</span><br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
 </div>
 <div hx-swap-oob="true" id="key-concepts-container">
     {% include "lessons/key_concepts_grid.html" with page=page addressed_key_concepts=addressed_key_concepts %}

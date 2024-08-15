@@ -51,7 +51,11 @@
                     </div>
                     <small id="char-count" class="form-text text-muted">0 / {{ max_message_length }}</small>
                 </form>
-                <button id="start-over-btn" class="btn btn-sm btn-outline-secondary mt-2">Start Over</button>
+                <button id="start-over-btn" class="btn btn-sm btn-outline-secondary mt-2"
+                    hx-post="{{ page.url }}"
+                    hx-vals='js:{"start_over": "true", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
+                    hx-target="body"
+                    hx-swap="beforeend">Start Over</button>
             </section>
         </div>
 
@@ -141,7 +145,6 @@
         const chatBubble = document.getElementById('chat-bubble');
         const chatContent = document.getElementById('chat-content');
         const chatThrobber = document.getElementById('chat-throbber');
-        const startOverBtn = document.getElementById('start-over-btn');
         const charCount = document.getElementById('char-count');
         const maxLength = {{ max_message_length }};
 
@@ -175,32 +178,6 @@
                 userMessageInput.value = event.target.textContent;
                 userMessageInput.focus();
             }
-        });
-
-        // Start Over functionality
-        startOverBtn.addEventListener('click', function() {
-            fetch('{{ page.url }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: 'start_over=true'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Clear the chat content
-                    chatContent.innerHTML = 'Conversation has been reset. You can start a new dialogue now.';
-                    // Show the chat bubble if it was hidden
-                    chatBubble.classList.remove('d-none');
-                    // Hide the throbber if it was visible
-                    chatThrobber.classList.add('d-none');
-                    // Reset the Key Concepts Grid
-                    
-                }
-            })
-            .catch(error => console.error('Error:', error));
         });
     });
 </script>
