@@ -17,3 +17,18 @@ Here's the conversation history so far:
 Continue the conversation in a natural way, maintaining the context and flow of the dialogue. If this is the start of the conversation, begin as if you're a character the learner might encounter in this setting.
 
 Keep the sentences short and simple. Use very common words and phrases. Avoid abstract concepts for beginning language students. Use only one key concept per response to avoid confusion.
+
+After each response, provide two or three suggestions for how the learner could respond in this situation. These suggestions should be appropriate for the context and help the user learn common phrases and responses.
+
+Your response should be in the following structured format:
+{
+  "assistant_message": "<your response in {{ language }} here>",
+  "suggestions": [
+    {"text": "<suggestion 1 in {{ language }}>"},
+    {"text": "<suggestion 2 in {{ language }}>"},
+    {"text": "<suggestion 3 in {{ language }}>"}
+  ],
+  "addressed_key_concept": "<the single key concept addressed in this response>"
+}
+
+Ensure that the "addressed_key_concept" field only includes one concept from the provided list of key concepts. This will help the learner focus on one concept at a time and reinforce their understanding.
