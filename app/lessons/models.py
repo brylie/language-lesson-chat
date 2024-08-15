@@ -135,6 +135,7 @@ class Lesson(Page, ClusterableModel):
         if request.method == "POST":
             if 'start_over' in request.POST:
                 request.session['conversation_history'] = []
+                request.session['addressed_key_concepts'] = []
                 return JsonResponse({'status': 'success'})
 
             user_message = request.POST.get("user_message", "")
@@ -152,6 +153,8 @@ class Lesson(Page, ClusterableModel):
 
     def get_llm_response(self, request, user_message):
         conversation_history = request.session.get('conversation_history', [])
+        addressed_key_concepts = request.session.get(
+            'addressed_key_concepts', [])
         prompt = self.get_context(request)['llm_prompt']
         messages = [
             {"role": "system", "content": prompt},
@@ -186,6 +189,9 @@ class Lesson(Page, ClusterableModel):
                 logger.warning(f"Invalid key concept: {
                                response_data.addressed_key_concept}")
                 response_data.addressed_key_concept = ""
+            elif response_data.addressed_key_concept not in addressed_key_concepts:
+                addressed_key_concepts.append(
+                    response_data.addressed_key_concept)
 
             # Update conversation history
             conversation_history.append(
@@ -194,13 +200,17 @@ class Lesson(Page, ClusterableModel):
                 {"role": "assistant", "content": response_data.assistant_message})
             # Limit to last 10 messages
             conversation_history = conversation_history[-10:]
+
+            # Update session variables
             request.session['conversation_history'] = conversation_history
+            request.session['addressed_key_concepts'] = addressed_key_concepts
 
             # Render the response template
             html_response = render_to_string('lessons/chat_response.html', {
                 'assistant_message': response_data.assistant_message,
                 'suggestions': response_data.suggestions,
                 'addressed_key_concept': response_data.addressed_key_concept,
+                'all_addressed_key_concepts': addressed_key_concepts,
             })
 
             return HttpResponse(html_response)
