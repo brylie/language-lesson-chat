@@ -175,7 +175,7 @@ class Lesson(Page, ClusterableModel):
             if chat_response.refusal:
                 logger.warning(f"OpenAI API refusal: {chat_response.refusal}")
                 return HttpResponse(
-                    render_to_string('lessons/chat_response.html', {
+                    render_to_string('lessons/combined_htmx_response.html', {
                         'error': "I'm sorry, but I can't respond to that request. Please try a different question or topic."
                     })
                 )
@@ -205,27 +205,28 @@ class Lesson(Page, ClusterableModel):
             request.session['conversation_history'] = conversation_history
             request.session['addressed_key_concepts'] = addressed_key_concepts
 
-            # Render the response template
-            html_response = render_to_string('lessons/chat_response.html', {
+            # Render the combined response
+            combined_response = render_to_string('lessons/combined_htmx_response.html', {
+                'page': self,
                 'assistant_message': response_data.assistant_message,
                 'suggestions': response_data.suggestions,
                 'addressed_key_concept': response_data.addressed_key_concept,
-                'all_addressed_key_concepts': addressed_key_concepts,
+                'addressed_key_concepts': addressed_key_concepts,
             })
 
-            return HttpResponse(html_response)
+            return HttpResponse(combined_response)
 
         except ValidationError as e:
             logger.error(f"Validation error in get_llm_response: {str(e)}")
             return HttpResponse(
-                render_to_string('lessons/chat_response.html', {
+                render_to_string('lessons/combined_htmx_response.html', {
                     'error': "An error occurred while processing the response. Please try again."
                 })
             )
         except Exception as e:
             logger.error(f"Unexpected error in get_llm_response: {str(e)}")
             return HttpResponse(
-                render_to_string('lessons/chat_response.html', {
+                render_to_string('lessons/combined_htmx_response.html', {
                     'error': "An unexpected error occurred. Please try again later or contact support if the problem persists."
                 })
             )

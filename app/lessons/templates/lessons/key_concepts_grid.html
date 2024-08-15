@@ -1,0 +1,24 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+
+<h2 class="mb-3">Key Concepts</h2>
+<div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-4">
+    {% for concept in page.key_concepts.all %}
+        <div class="col">
+            <div class="card h-100">
+                {% if concept.image %}
+                    {% image concept.image fill-200x200 as concept_image %}
+                    <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
+                {% endif %}
+                <div class="card-body p-2">
+                    <p class="card-text mb-0 text-center">
+                        {% if concept.concept in addressed_key_concepts %}
+                            <span class="badge bg-success">{{ concept.concept }} ✔️</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ concept.concept }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
