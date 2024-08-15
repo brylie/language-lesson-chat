@@ -9,7 +9,7 @@ from modelcluster.models import ClusterableModel
 import os
 from openai import OpenAI
 import logging
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from typing import List
 
 # Set up logging
