@@ -9,15 +9,17 @@ from modelcluster.models import ClusterableModel
 import os
 from openai import OpenAI
 import logging
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 from typing import List
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-
 # Define the character limit constant
 MAX_MESSAGE_LENGTH = 150
+
+# Define the constant for responses without a key concept
+NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
 
 
 class Suggestion(BaseModel):
@@ -28,7 +30,7 @@ class ChatResponse(BaseModel):
     assistant_message: str
     suggestions: List[Suggestion]
     addressed_key_concept: str = Field(
-        ..., description="The single key concept addressed in this response")
+        ..., description=f"The single key concept addressed in this response, or '{NO_KEY_CONCEPT}' if none was used")
 
 
 class KeyConcept(models.Model):
@@ -195,11 +197,11 @@ class Lesson(Page, ClusterableModel):
             # Validate key concept
             valid_key_concepts = [
                 concept.concept for concept in self.key_concepts.all()]
-            if response_data.addressed_key_concept not in valid_key_concepts:
+            if response_data.addressed_key_concept not in valid_key_concepts and response_data.addressed_key_concept != NO_KEY_CONCEPT:
                 logger.warning(f"Invalid key concept: {
                                response_data.addressed_key_concept}")
-                response_data.addressed_key_concept = ""
-            elif response_data.addressed_key_concept not in addressed_key_concepts:
+                response_data.addressed_key_concept = NO_KEY_CONCEPT
+            elif response_data.addressed_key_concept != NO_KEY_CONCEPT and response_data.addressed_key_concept not in addressed_key_concepts:
                 addressed_key_concepts.append(
                     response_data.addressed_key_concept)
 

@@ -1,4 +1,3 @@
-{% comment %}lessons/templates/lessons/combined_htmx_response.html{% endcomment %}
 <div hx-swap-oob="true" id="chat-content">
     {% if error %}
         <div class="assistant-message">
@@ -8,6 +7,11 @@
         <div class="assistant-message">
             {{ assistant_message }}
         </div>
+        {% if addressed_key_concept != no_key_concept %}
+            <div class="key-concept-used">
+                Key Concept: {{ addressed_key_concept }}
+            </div>
+        {% endif %}
         {% if suggestions %}
             <div class="suggestions">
                 <strong>Suggested responses:</strong><br>
@@ -19,5 +23,5 @@
     {% endif %}
 </div>
 <div hx-swap-oob="true" id="key-concepts-container">
-    {% include "lessons/key_concepts_grid.html" with page=page addressed_key_concepts=addressed_key_concepts %}
+    {% include "lessons/key_concepts_grid.html" with page=page addressed_key_concepts=addressed_key_concepts no_key_concept=no_key_concept %}
 </div>
