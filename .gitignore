@@ -163,3 +163,5 @@ cython_debug/
 
 # Wagtail/Django
 media/
+
+*.DS_Store
