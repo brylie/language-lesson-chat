@@ -1,5 +1,5 @@
 from django.db import models
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -133,7 +133,7 @@ class Lesson(Page, ClusterableModel):
         InlinePanel("key_concepts", label="Key Concepts"),
     ]
 
-    def get_context(self, request):
+    def get_context(self, request: HttpRequest) -> dict:
         """
         Generate and return the context dictionary for the lesson page.
 
@@ -142,17 +142,15 @@ class Lesson(Page, ClusterableModel):
         prompt.
 
         :param request: The HTTP request object.
-        :type request: HttpRequest
         :return: A dictionary containing the context for rendering the lesson page.
-        :rtype: dict
 
         The context includes:
         - key_concepts: A queryset of all key concepts associated with the lesson.
         - max_message_length: The maximum allowed length for user messages.
         - llm_prompt: A rendered string template that serves as a prompt for the
-          language model, incorporating lesson-specific details such as difficulty
-          level, location, system prompt, key concepts, conversation history, and
-          language.
+            language model, incorporating lesson-specific details such as difficulty
+            level, location, system prompt, key concepts, conversation history, and
+            language.
         """
         context = super().get_context(request)
         context["key_concepts"] = self.key_concepts.all()
@@ -173,7 +171,7 @@ class Lesson(Page, ClusterableModel):
 
         return context
 
-    def serve(self, request):
+    def serve(self, request: HttpRequest) -> HttpResponse:
         """
         Handles HTTP requests for the Lesson page, processing user interactions
         and managing conversation state.
@@ -226,7 +224,7 @@ class Lesson(Page, ClusterableModel):
             return HttpResponse(llm_response)
         return super().serve(request)
 
-    def get_llm_response(self, request, user_message):
+    def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
         """
         Generates a response from a language model based on the user's message and the lesson context.
 
@@ -235,11 +233,8 @@ class Lesson(Page, ClusterableModel):
         key concepts in the session, and returns an HTTP response with the assistant's message and suggestions.
 
         :param request: The HTTP request object containing session data.
-        :type request: HttpRequest
         :param user_message: The message input by the user.
-        :type user_message: str
         :return: An HTTP response containing the assistant's message and suggestions.
-        :rtype: HttpResponse
 
         :raises ValidationError: If there is an error in validating the response data.
         :raises Exception: For any unexpected errors during the process.
@@ -286,8 +281,9 @@ class Lesson(Page, ClusterableModel):
 
             # Validate key concept
             if response_data.addressed_key_concept not in valid_key_concepts:
-                logger.warning(f"Invalid key concept: {
-                               response_data.addressed_key_concept}")
+                logger.warning(
+                    f"Invalid key concept: {response_data.addressed_key_concept}"
+                )
                 response_data.addressed_key_concept = NO_KEY_CONCEPT
             elif (
                 response_data.addressed_key_concept != NO_KEY_CONCEPT
