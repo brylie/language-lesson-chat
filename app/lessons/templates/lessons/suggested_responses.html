@@ -1,0 +1,19 @@
+{% if suggestions %}
+    <div class="suggestions">
+        <strong>Suggested responses:</strong><br>
+        {% for suggestion in suggestions %}
+            <span class="suggestion">{{ suggestion.text }}</span>
+        {% endfor %}
+    </div>
+    <script>
+        const userMessageInput = document.getElementById('user-message-input');
+        const suggestions = document.querySelectorAll('.suggestion');
+        suggestions.forEach(suggestion => {
+            suggestion.addEventListener('click', function() {
+                userMessageInput.value = suggestion.textContent;
+                userMessageInput.focus();
+            });
+        });
+        console.log('suggestions loaded');
+    </script>
+{% endif %}
