@@ -16,7 +16,7 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 # Define the character limit constant
-MAX_MESSAGE_LENGTH = 150
+MAX_MESSAGE_LENGTH = 100
 
 # Define the constant for responses without a key concept
 NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
