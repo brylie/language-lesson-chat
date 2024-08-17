@@ -1,6 +1,7 @@
+from urllib.parse import urlencode
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -22,6 +23,8 @@ MAX_USER_MESSAGE_LENGTH = 100
 
 # Define the constant for responses without a key concept
 NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
+SUCCESS_PARAM = "success"
+START_OVER_PARAM = "start_over"
 
 
 class Suggestion(BaseModel):
@@ -191,8 +194,18 @@ class Lesson(Page, ClusterableModel):
             or JSON response based on the request type and processing outcome.
         """
 
-        if request.method == "GET" and "success" in request.GET:
-            return self.render_success_if_complete_else_redirect_to_self(request)
+        if request.method == "GET" and SUCCESS_PARAM in request.GET:
+            if self.user_has_responded_to_all_key_concepts(request):
+                self.reset_lesson_progress(request)
+                return self.render_success_page(request)
+            else:
+                # If the user has not completed the lesson, reset the progress
+                self.reset_lesson_progress(request)
+
+                # Remove the SUCCESS_PARAM from the URL and redirect
+                params = request.GET.copy()
+                params.pop(SUCCESS_PARAM)
+                return redirect(f"{request.path}")
 
         if request.method == "POST":
             if "start_over" in request.POST:
@@ -225,7 +238,7 @@ class Lesson(Page, ClusterableModel):
         return super().serve(request)
 
     def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
-        return HttpResponseClientRedirect(f"{self.url}?success=true")
+        return HttpResponseClientRedirect(f"{self.url}?{SUCCESS_PARAM}=true")
 
     def render_success_if_complete_else_redirect_to_self(
         self, request: HttpRequest
@@ -237,7 +250,8 @@ class Lesson(Page, ClusterableModel):
             self.reset_lesson_progress(request)
             return self.render_success_page(request)
         else:
-            return HttpResponseClientRedirect(self.url)
+            # return HttpResponseClientRedirect(self.url)
+            pass
 
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
         self.reset_lesson_progress(request)
