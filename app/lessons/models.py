@@ -1,6 +1,6 @@
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -12,6 +12,7 @@ from openai import OpenAI
 import logging
 from pydantic import BaseModel, Field, ValidationError
 from typing import List
+from django_htmx.http import HttpResponseClientRedirect
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -189,12 +190,9 @@ class Lesson(Page, ClusterableModel):
             HttpResponse: The response object containing the rendered HTML content
             or JSON response based on the request type and processing outcome.
         """
-        # TODO: determine how to display the success page
-        # if request.method == "GET" and "success" in request.GET:
-        #     if self.user_has_responded_to_all_key_concepts(request):
-        #         return self.serve_success_page(request)
-        #     else:
-        #         return redirect(self.url)
+
+        if request.method == "GET" and "success" in request.GET:
+            return self.render_success_if_complete_else_redirect_to_self(request)
 
         if request.method == "POST":
             if "start_over" in request.POST:
@@ -220,16 +218,30 @@ class Lesson(Page, ClusterableModel):
 
             lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
             if lesson_is_complete:
-                print("lesson is complete")
-                # TODO: determine how to display the success page
-                # return redirect(f"{self.url}?success=true")
+                return self.handle_lesson_completion(request)
 
             return HttpResponse(llm_response)
 
         return super().serve(request)
 
+    def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
+        return HttpResponseClientRedirect(f"{self.url}?success=true")
+
+    def render_success_if_complete_else_redirect_to_self(
+        self, request: HttpRequest
+    ) -> HttpResponse:
+        """Ensure the student has responded to all key concepts before rendering the success page.
+
+        If the student has not responded to all key concepts, redirect back to the lesson page."""
+        if self.user_has_responded_to_all_key_concepts(request):
+            self.reset_lesson_progress(request)
+            return self.render_success_page(request)
+        else:
+            return HttpResponseClientRedirect(self.url)
+
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
         self.reset_lesson_progress(request)
+
         context = self.get_context(request)
         context.update(
             {
@@ -252,14 +264,11 @@ class Lesson(Page, ClusterableModel):
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
 
-    def serve_success_page(self, request: HttpRequest) -> HttpResponse:
+    def render_success_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
         context.update(
             {
                 "key_concepts": self.key_concepts.all(),
-                "responded_key_concepts": request.session.get(
-                    "responded_key_concepts", []
-                ),
             }
         )
         return render(request, "lessons/lesson_success.html", context)
