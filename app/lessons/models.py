@@ -191,9 +191,10 @@ class Lesson(Page, ClusterableModel):
 
         if request.method == "POST":
             if "start_over" in request.POST:
-                # Reset the conversation history and addressed key concepts
+                # Reset the conversation history and key concept tracking
                 request.session["conversation_history"] = []
                 request.session["addressed_key_concepts"] = []
+                request.session["responded_key_concepts"] = []
 
                 # Render the reset response
                 reset_response = render_to_string(
@@ -204,11 +205,13 @@ class Lesson(Page, ClusterableModel):
                         "suggestions": [],
                         "addressed_key_concept": "",
                         "addressed_key_concepts": [],
+                        "responded_key_concepts": [],
                     },
                 )
                 return HttpResponse(reset_response)
 
             user_message = request.POST.get("user_message", "")
+            response_key_concept = request.POST.get("response_key_concept", "")
 
             # Server-side validation of message length
             if len(user_message) > MAX_USER_MESSAGE_LENGTH:
@@ -220,9 +223,41 @@ class Lesson(Page, ClusterableModel):
                     status=400,
                 )
 
+            self.update_responded_key_concepts(request, response_key_concept)
+
+            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+
+            if lesson_is_complete:
+                print("Lesson is complete!")
+
             llm_response = self.get_llm_response(request, user_message)
             return HttpResponse(llm_response)
         return super().serve(request)
+
+    def update_responded_key_concepts(
+        self,
+        request: HttpRequest,
+        response_key_concept: str,
+    ):
+        """
+        Update the list of key concepts that the user has responded to.
+        """
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        if (
+            response_key_concept
+            and response_key_concept != NO_KEY_CONCEPT
+            and response_key_concept not in responded_key_concepts
+        ):
+            responded_key_concepts.append(response_key_concept)
+            request.session["responded_key_concepts"] = responded_key_concepts
+
+    def user_has_responded_to_all_key_concepts(self, request: HttpRequest) -> bool:
+        """
+        Check if the user has responded to all key concepts in the lesson.
+        """
+        lesson_key_concepts = [concept.concept for concept in self.key_concepts.all()]
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        return set(lesson_key_concepts) == set(responded_key_concepts)
 
     def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
         """
@@ -241,6 +276,7 @@ class Lesson(Page, ClusterableModel):
         """
 
         conversation_history = request.session.get("conversation_history", [])
+
         addressed_key_concepts = request.session.get("addressed_key_concepts", [])
         prompt = self.get_context(request)["llm_prompt"]
         messages = (
