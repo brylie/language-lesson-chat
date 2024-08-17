@@ -178,22 +178,18 @@ class Lesson(Page, ClusterableModel):
 
     def serve(self, request: HttpRequest) -> HttpResponse:
         """
-        Handles HTTP requests for the Lesson page, processing user interactions
-        and managing conversation state.
+        Serve the lesson based on the user's request method and parameters.
 
-        This method processes POST requests to handle user messages and reset
-        conversation history. It validates user input, interacts with the language
-        model to generate responses, and updates the session state accordingly.
+        Handles GET requests with SUCCESS_PARAM, checks if all key concepts are responded to,
+        resets lesson progress if needed, and redirects accordingly. This is to ensure that the
+        success page is only shown when the lesson is complete and to correctly render the lesson
+        page if the user hasn't responded to all key concepts but somehow reached the success page.
 
-        Parameters:
-            request (HttpRequest): The HTTP request object containing metadata
-            about the request.
+        Handles POST requests by validating user message length, updating responded key concepts,
+        getting a response from the LLM model, and checking lesson completion.
 
-        Returns:
-            HttpResponse: The response object containing the rendered HTML content
-            or JSON response based on the request type and processing outcome.
+        Returns appropriate HTTP responses based on the request method and lesson progress.
         """
-
         if request.method == "GET" and SUCCESS_PARAM in request.GET:
             if self.user_has_responded_to_all_key_concepts(request):
                 self.reset_lesson_progress(request)
