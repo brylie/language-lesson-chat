@@ -1,5 +1,7 @@
+from urllib.parse import urlencode
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -11,6 +13,7 @@ from openai import OpenAI
 import logging
 from pydantic import BaseModel, Field, ValidationError
 from typing import List
+from django_htmx.http import HttpResponseClientRedirect
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -20,6 +23,8 @@ MAX_USER_MESSAGE_LENGTH = 100
 
 # Define the constant for responses without a key concept
 NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
+SUCCESS_PARAM = "success"
+START_OVER_PARAM = "start_over"
 
 
 class Suggestion(BaseModel):
@@ -173,42 +178,37 @@ class Lesson(Page, ClusterableModel):
 
     def serve(self, request: HttpRequest) -> HttpResponse:
         """
-        Handles HTTP requests for the Lesson page, processing user interactions
-        and managing conversation state.
+        Serve the lesson based on the user's request method and parameters.
 
-        This method processes POST requests to handle user messages and reset
-        conversation history. It validates user input, interacts with the language
-        model to generate responses, and updates the session state accordingly.
+        Handles GET requests with SUCCESS_PARAM, checks if all key concepts are responded to,
+        resets lesson progress if needed, and redirects accordingly. This is to ensure that the
+        success page is only shown when the lesson is complete and to correctly render the lesson
+        page if the user hasn't responded to all key concepts but somehow reached the success page.
 
-        Parameters:
-            request (HttpRequest): The HTTP request object containing metadata
-            about the request.
+        Handles POST requests by validating user message length, updating responded key concepts,
+        getting a response from the LLM model, and checking lesson completion.
 
-        Returns:
-            HttpResponse: The response object containing the rendered HTML content
-            or JSON response based on the request type and processing outcome.
+        Returns appropriate HTTP responses based on the request method and lesson progress.
         """
+        if request.method == "GET" and SUCCESS_PARAM in request.GET:
+            if self.user_has_responded_to_all_key_concepts(request):
+                self.reset_lesson_progress(request)
+                return self.render_success_page(request)
+            else:
+                # If the user has not completed the lesson, reset the progress
+                self.reset_lesson_progress(request)
+
+                # Remove the SUCCESS_PARAM from the URL and redirect
+                params = request.GET.copy()
+                params.pop(SUCCESS_PARAM)
+                return redirect(f"{request.path}")
 
         if request.method == "POST":
             if "start_over" in request.POST:
-                # Reset the conversation history and addressed key concepts
-                request.session["conversation_history"] = []
-                request.session["addressed_key_concepts"] = []
-
-                # Render the reset response
-                reset_response = render_to_string(
-                    "lessons/combined_htmx_response.html",
-                    {
-                        "page": self,
-                        "assistant_message": "Conversation has been reset. You can start a new dialogue now.",
-                        "suggestions": [],
-                        "addressed_key_concept": "",
-                        "addressed_key_concepts": [],
-                    },
-                )
-                return HttpResponse(reset_response)
+                return self.handle_start_over(request)
 
             user_message = request.POST.get("user_message", "")
+            response_key_concept = request.POST.get("response_key_concept", "")
 
             # Server-side validation of message length
             if len(user_message) > MAX_USER_MESSAGE_LENGTH:
@@ -220,9 +220,93 @@ class Lesson(Page, ClusterableModel):
                     status=400,
                 )
 
+            # Update responded key concepts
+            self.update_responded_key_concepts(request, response_key_concept)
+
             llm_response = self.get_llm_response(request, user_message)
+
+            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+            if lesson_is_complete:
+                return self.handle_lesson_completion(request)
+
             return HttpResponse(llm_response)
+
         return super().serve(request)
+
+    def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
+        return HttpResponseClientRedirect(f"{self.url}?{SUCCESS_PARAM}=true")
+
+    def render_success_if_complete_else_redirect_to_self(
+        self, request: HttpRequest
+    ) -> HttpResponse:
+        """Ensure the student has responded to all key concepts before rendering the success page.
+
+        If the student has not responded to all key concepts, redirect back to the lesson page."""
+        if self.user_has_responded_to_all_key_concepts(request):
+            self.reset_lesson_progress(request)
+            return self.render_success_page(request)
+        else:
+            # return HttpResponseClientRedirect(self.url)
+            pass
+
+    def handle_start_over(self, request: HttpRequest) -> HttpResponse:
+        self.reset_lesson_progress(request)
+
+        context = self.get_context(request)
+        context.update(
+            {
+                "page": self,
+                "assistant_message": "The lesson has been reset. You can start a new dialogue now.",
+                "suggestions": [],
+                "addressed_key_concept": "",
+                "addressed_key_concepts": [],
+                "responded_key_concepts": [],
+                "no_key_concept": NO_KEY_CONCEPT,
+            }
+        )
+        reset_response = render_to_string(
+            "lessons/combined_htmx_response.html", context
+        )
+        return HttpResponse(reset_response)
+
+    def reset_lesson_progress(self, request: HttpRequest):
+        request.session["conversation_history"] = []
+        request.session["addressed_key_concepts"] = []
+        request.session["responded_key_concepts"] = []
+
+    def render_success_page(self, request: HttpRequest) -> HttpResponse:
+        context = self.get_context(request)
+        context.update(
+            {
+                "key_concepts": self.key_concepts.all(),
+            }
+        )
+        return render(request, "lessons/lesson_success.html", context)
+
+    def update_responded_key_concepts(
+        self,
+        request: HttpRequest,
+        response_key_concept: str,
+    ):
+        """
+        Update the list of key concepts that the user has responded to.
+        """
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        if (
+            response_key_concept
+            and response_key_concept != NO_KEY_CONCEPT
+            and response_key_concept not in responded_key_concepts
+        ):
+            responded_key_concepts.append(response_key_concept)
+            request.session["responded_key_concepts"] = responded_key_concepts
+
+    def user_has_responded_to_all_key_concepts(self, request: HttpRequest) -> bool:
+        """
+        Check if the user has responded to all key concepts in the lesson.
+        """
+        lesson_key_concepts = [concept.concept for concept in self.key_concepts.all()]
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        return set(lesson_key_concepts) == set(responded_key_concepts)
 
     def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
         """
@@ -241,6 +325,7 @@ class Lesson(Page, ClusterableModel):
         """
 
         conversation_history = request.session.get("conversation_history", [])
+
         addressed_key_concepts = request.session.get("addressed_key_concepts", [])
         prompt = self.get_context(request)["llm_prompt"]
         messages = (
