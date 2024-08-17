@@ -1,5 +1,6 @@
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField
@@ -188,27 +189,16 @@ class Lesson(Page, ClusterableModel):
             HttpResponse: The response object containing the rendered HTML content
             or JSON response based on the request type and processing outcome.
         """
+        # TODO: determine how to display the success page
+        # if request.method == "GET" and "success" in request.GET:
+        #     if self.user_has_responded_to_all_key_concepts(request):
+        #         return self.serve_success_page(request)
+        #     else:
+        #         return redirect(self.url)
 
         if request.method == "POST":
             if "start_over" in request.POST:
-                # Reset the conversation history and key concept tracking
-                request.session["conversation_history"] = []
-                request.session["addressed_key_concepts"] = []
-                request.session["responded_key_concepts"] = []
-
-                # Render the reset response
-                reset_response = render_to_string(
-                    "lessons/combined_htmx_response.html",
-                    {
-                        "page": self,
-                        "assistant_message": "Conversation has been reset. You can start a new dialogue now.",
-                        "suggestions": [],
-                        "addressed_key_concept": "",
-                        "addressed_key_concepts": [],
-                        "responded_key_concepts": [],
-                    },
-                )
-                return HttpResponse(reset_response)
+                return self.handle_start_over(request)
 
             user_message = request.POST.get("user_message", "")
             response_key_concept = request.POST.get("response_key_concept", "")
@@ -223,16 +213,56 @@ class Lesson(Page, ClusterableModel):
                     status=400,
                 )
 
+            # Update responded key concepts
             self.update_responded_key_concepts(request, response_key_concept)
 
-            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
-
-            if lesson_is_complete:
-                print("Lesson is complete!")
-
             llm_response = self.get_llm_response(request, user_message)
+
+            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+            if lesson_is_complete:
+                print("lesson is complete")
+                # TODO: determine how to display the success page
+                # return redirect(f"{self.url}?success=true")
+
             return HttpResponse(llm_response)
+
         return super().serve(request)
+
+    def handle_start_over(self, request: HttpRequest) -> HttpResponse:
+        self.reset_lesson_progress(request)
+        context = self.get_context(request)
+        context.update(
+            {
+                "page": self,
+                "assistant_message": "The lesson has been reset. You can start a new dialogue now.",
+                "suggestions": [],
+                "addressed_key_concept": "",
+                "addressed_key_concepts": [],
+                "responded_key_concepts": [],
+                "no_key_concept": NO_KEY_CONCEPT,
+            }
+        )
+        reset_response = render_to_string(
+            "lessons/combined_htmx_response.html", context
+        )
+        return HttpResponse(reset_response)
+
+    def reset_lesson_progress(self, request: HttpRequest):
+        request.session["conversation_history"] = []
+        request.session["addressed_key_concepts"] = []
+        request.session["responded_key_concepts"] = []
+
+    def serve_success_page(self, request: HttpRequest) -> HttpResponse:
+        context = self.get_context(request)
+        context.update(
+            {
+                "key_concepts": self.key_concepts.all(),
+                "responded_key_concepts": request.session.get(
+                    "responded_key_concepts", []
+                ),
+            }
+        )
+        return render(request, "lessons/lesson_success.html", context)
 
     def update_responded_key_concepts(
         self,
