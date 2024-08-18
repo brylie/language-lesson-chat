@@ -300,7 +300,11 @@ class Lesson(Page, ClusterableModel):
             pass
 
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
+        # Reset lesson progress
         self.reset_lesson_progress(request)
+
+        # Create a new transcript
+        new_transcript = self.manage_transcript(request, create_new=True)
 
         context = self.get_context(request)
         context.update(
@@ -312,6 +316,7 @@ class Lesson(Page, ClusterableModel):
                 "addressed_key_concepts": [],
                 "responded_key_concepts": [],
                 "no_key_concept": NO_KEY_CONCEPT,
+                "transcript_id": new_transcript.id,
             }
         )
         reset_response = render_to_string(
@@ -324,8 +329,41 @@ class Lesson(Page, ClusterableModel):
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
 
+    def manage_transcript(
+        self,
+        request: HttpRequest,
+        create_new: bool = False,
+    ) -> Transcript:
+        if create_new or "transcript_id" not in request.session:
+            # Clear existing transcript ID if present
+            if "transcript_id" in request.session:
+                del request.session["transcript_id"]
+
+            # Create a new transcript
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
+            request.session["transcript_id"] = transcript.id
+        else:
+            transcript_id = request.session.get("transcript_id")
+            try:
+                transcript = Transcript.objects.get(id=transcript_id)
+            except Transcript.DoesNotExist:
+                # If the transcript doesn't exist, create a new one
+                transcript = Transcript.objects.create(user=request.user, lesson=self)
+                request.session["transcript_id"] = transcript.id
+
+        return transcript
+
     def render_success_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
+
+        # Retrieve the current transcript
+        transcript = self.manage_transcript(request)
+        context["transcript"] = transcript
+
+        # Clear the transcript ID from the session to ensure a new one is created next time
+        if "transcript_id" in request.session:
+            del request.session["transcript_id"]
+
         context.update(
             {
                 "key_concepts": self.key_concepts.all(),
