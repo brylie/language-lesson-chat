@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "home",
     "lessons",
     "search",
+    "transcripts",
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
