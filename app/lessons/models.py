@@ -323,3 +323,4 @@ class Lesson(Page, ClusterableModel):
     class Meta:
         verbose_name = "Language Lesson"
         verbose_name_plural = "Language Lessons"
+        db_table = "lessons"
