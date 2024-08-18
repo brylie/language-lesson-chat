@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 import logging
 from pydantic import BaseModel, Field, ValidationError
-from typing import List
+from typing import TYPE_CHECKING, List
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 LLM_MODEL = "gpt-4o-2024-08-06"
 NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
+
+if TYPE_CHECKING:
+    from .models import Lesson
 
 
 class Suggestion(BaseModel):
@@ -25,14 +28,26 @@ class ChatResponse(BaseModel):
     )
 
 
-def render_llm_prompt(context):
-    return render_to_string("lessons/prompt_template.txt", context)
+def render_llm_prompt(lesson: "Lesson", conversation_history: List[dict]):
+    prompt_context = {
+        "difficulty_level": lesson.get_difficulty_level_display(),
+        "language": lesson.language,
+        "location": lesson.location,
+        "system_prompt": lesson.llm_system_prompt,
+        "key_concepts": [concept.concept for concept in lesson.key_concepts.all()],
+        "conversation_history": conversation_history,
+    }
+    return render_to_string("lessons/prompt_template.txt", prompt_context)
 
 
 def get_llm_response(request, user_message, lesson):
     conversation_history = request.session.get("conversation_history", [])
     addressed_key_concepts = request.session.get("addressed_key_concepts", [])
-    prompt = render_llm_prompt(lesson.get_context(request))
+
+    prompt = render_llm_prompt(
+        lesson=lesson,
+        conversation_history=conversation_history,
+    )
 
     messages = (
         [{"role": "system", "content": prompt}]

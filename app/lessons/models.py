@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 from transcripts.models import Transcript, TranscriptMessage
 
-from .llm import NO_KEY_CONCEPT, get_llm_response, render_llm_prompt
+from .llm import NO_KEY_CONCEPT, get_llm_response
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -112,18 +112,6 @@ class Lesson(Page, ClusterableModel):
         context = super().get_context(request)
         context["key_concepts"] = self.key_concepts.all()
         context["max_message_length"] = MAX_USER_MESSAGE_LENGTH
-
-        # Generate the LLM prompt
-        prompt_context = {
-            "difficulty_level": self.get_difficulty_level_display(),
-            "location": self.location,
-            "system_prompt": self.llm_system_prompt,
-            "key_concepts": [concept.concept for concept in self.key_concepts.all()],
-            "conversation_history": request.session.get("conversation_history", []),
-            "language": self.language,
-        }
-        context["llm_prompt"] = render_llm_prompt(prompt_context)
-
         context["transcript"] = self.get_or_create_transcript(request)
 
         return context
