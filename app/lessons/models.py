@@ -11,6 +11,8 @@ import logging
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib.auth import get_user_model
 
+from transcripts.models import Transcript, TranscriptMessage
+
 from .llm import NO_KEY_CONCEPT, get_llm_response, render_llm_prompt
 
 # Set up logging
@@ -24,48 +26,6 @@ SUCCESS_PARAM = "success"
 START_OVER_PARAM = "start_over"
 
 User = get_user_model()
-
-
-class Transcript(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="transcripts")
-    lesson = models.ForeignKey(
-        "Lesson",
-        on_delete=models.CASCADE,
-        related_name="transcripts",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Transcript for {self.user.username} - {self.lesson.title}"
-
-    class Meta:
-        ordering = ["-created_at"]
-        db_table = "transcripts"
-
-
-class TranscriptMessage(models.Model):
-    ROLE_CHOICES = [
-        ("user", "User"),
-        ("assistant", "Assistant"),
-    ]
-
-    transcript = models.ForeignKey(
-        Transcript,
-        on_delete=models.CASCADE,
-        related_name="messages",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    content = models.TextField()
-    key_concept = models.CharField(max_length=255, blank=True, null=True)
-    llm_model = models.CharField(max_length=50, blank=True, null=True)
-
-    class Meta:
-        ordering = ["created_at"]
-        db_table = "transcript_messages"
-
-    def __str__(self):
-        return f"{self.role} message in {self.transcript}"
 
 
 class KeyConcept(models.Model):
@@ -164,7 +124,6 @@ class Lesson(Page, ClusterableModel):
         }
         context["llm_prompt"] = render_llm_prompt(prompt_context)
 
-        # Get or create a transcript
         context["transcript"] = self.get_or_create_transcript(request)
 
         return context
