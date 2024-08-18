@@ -55,7 +55,9 @@ class TranscriptMessage(models.Model):
     ]
 
     transcript = models.ForeignKey(
-        Transcript, on_delete=models.CASCADE, related_name="messages"
+        Transcript,
+        on_delete=models.CASCADE,
+        related_name="messages",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
@@ -271,7 +273,12 @@ class Lesson(Page, ClusterableModel):
             self.update_responded_key_concepts(request, response_key_concept)
 
             # Log user message
-            self.log_message(request, "user", user_message, response_key_concept)
+            self.log_message(
+                request,
+                "user",
+                user_message,
+                response_key_concept,
+            )
 
             llm_response = self.get_llm_response(request, user_message)
 
@@ -367,6 +374,7 @@ class Lesson(Page, ClusterableModel):
         context.update(
             {
                 "key_concepts": self.key_concepts.all(),
+                "no_key_concept": NO_KEY_CONCEPT,
             }
         )
         return render(request, "lessons/lesson_success.html", context)
@@ -529,7 +537,7 @@ class Lesson(Page, ClusterableModel):
                 transcript_id=transcript_id,
                 role=role,
                 content=content,
-                key_concept=key_concept,
+                key_concept=key_concept if key_concept != NO_KEY_CONCEPT else None,
                 llm_model=llm_model if role == "assistant" else None,
             )
 
