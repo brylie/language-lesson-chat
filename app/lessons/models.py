@@ -14,6 +14,7 @@ import logging
 from pydantic import BaseModel, Field, ValidationError
 from typing import List
 from django_htmx.http import HttpResponseClientRedirect
+from django.contrib.auth import get_user_model
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -26,6 +27,34 @@ NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
 SUCCESS_PARAM = "success"
 START_OVER_PARAM = "start_over"
 
+User = get_user_model()
+
+class Transcript(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transcripts')
+    lesson = models.ForeignKey('Lesson', on_delete=models.CASCADE, related_name='transcripts')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Transcript for {self.user.username} - {self.lesson.title}"
+
+class TranscriptMessage(models.Model):
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+    ]
+
+    transcript = models.ForeignKey(Transcript, on_delete=models.CASCADE, related_name='messages')
+    created_at = models.DateTimeField(auto_now_add=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    key_concept = models.CharField(max_length=255, blank=True, null=True)
+    llm_model = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.role} message in {self.transcript}"
 
 class Suggestion(BaseModel):
     """
@@ -174,6 +203,9 @@ class Lesson(Page, ClusterableModel):
             "lessons/prompt_template.txt", prompt_context
         )
 
+        # Get or create a transcript
+        context['transcript'] = self.get_or_create_transcript(request)
+
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
@@ -222,6 +254,9 @@ class Lesson(Page, ClusterableModel):
 
             # Update responded key concepts
             self.update_responded_key_concepts(request, response_key_concept)
+
+            # Log user message
+            self.log_message(request, 'user', user_message, response_key_concept)
 
             llm_response = self.get_llm_response(request, user_message)
 
@@ -388,6 +423,9 @@ class Lesson(Page, ClusterableModel):
             request.session["conversation_history"] = conversation_history
             request.session["addressed_key_concepts"] = addressed_key_concepts
 
+            # Log assistant message
+            self.log_message(request, 'assistant', response_data.assistant_message, response_data.addressed_key_concept, 'gpt-4-0613')
+
             # Render the combined response
             combined_response = render_to_string(
                 "lessons/combined_htmx_response.html",
@@ -424,6 +462,33 @@ class Lesson(Page, ClusterableModel):
                     },
                 )
             )
+
+    def create_transcript(self, request):
+        transcript = Transcript.objects.create(
+            user=request.user,
+            lesson=self
+        )
+        request.session['transcript_id'] = transcript.id
+        return transcript
+
+    def log_message(self, request, role, content, key_concept=None, llm_model=None):
+        transcript_id = request.session.get('transcript_id')
+        if transcript_id:
+            TranscriptMessage.objects.create(
+                transcript_id=transcript_id,
+                role=role,
+                content=content,
+                key_concept=key_concept,
+                llm_model=llm_model if role == 'assistant' else None
+            )
+
+    def get_or_create_transcript(self, request):
+        if 'transcript_id' not in request.session:
+            return self.create_transcript(request)
+        else:
+            transcript_id = request.session.get('transcript_id')
+            if transcript_id:
+                return Transcript.objects.get(id=transcript_id)
 
     class Meta:
         verbose_name = "Language Lesson"
