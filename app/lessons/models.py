@@ -178,9 +178,6 @@ class Lesson(Page, ClusterableModel):
                 # If the user has not completed the lesson, reset the progress
                 self.reset_lesson_progress(request)
 
-                # Remove the SUCCESS_PARAM from the URL and redirect
-                params = request.GET.copy()
-                params.pop(SUCCESS_PARAM)
                 return redirect(f"{request.path}")
 
         if request.method == "POST":
