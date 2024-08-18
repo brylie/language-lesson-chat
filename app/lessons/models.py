@@ -1,4 +1,3 @@
-from urllib.parse import urlencode
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -14,9 +13,12 @@ import logging
 from pydantic import BaseModel, Field, ValidationError
 from typing import List
 from django_htmx.http import HttpResponseClientRedirect
+from django.contrib.auth import get_user_model
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+LLM_MODEL = "gpt-4o-2024-08-06"
 
 # Define the character limit constant
 MAX_USER_MESSAGE_LENGTH = 100
@@ -25,6 +27,50 @@ MAX_USER_MESSAGE_LENGTH = 100
 NO_KEY_CONCEPT = "NO_KEY_CONCEPT"
 SUCCESS_PARAM = "success"
 START_OVER_PARAM = "start_over"
+
+User = get_user_model()
+
+
+class Transcript(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="transcripts")
+    lesson = models.ForeignKey(
+        "Lesson",
+        on_delete=models.CASCADE,
+        related_name="transcripts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Transcript for {self.user.username} - {self.lesson.title}"
+
+    class Meta:
+        ordering = ["-created_at"]
+        db_table = "transcripts"
+
+
+class TranscriptMessage(models.Model):
+    ROLE_CHOICES = [
+        ("user", "User"),
+        ("assistant", "Assistant"),
+    ]
+
+    transcript = models.ForeignKey(
+        Transcript,
+        on_delete=models.CASCADE,
+        related_name="messages",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    key_concept = models.CharField(max_length=255, blank=True, null=True)
+    llm_model = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        db_table = "transcript_messages"
+
+    def __str__(self):
+        return f"{self.role} message in {self.transcript}"
 
 
 class Suggestion(BaseModel):
@@ -174,6 +220,9 @@ class Lesson(Page, ClusterableModel):
             "lessons/prompt_template.txt", prompt_context
         )
 
+        # Get or create a transcript
+        context["transcript"] = self.get_or_create_transcript(request)
+
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
@@ -223,6 +272,14 @@ class Lesson(Page, ClusterableModel):
             # Update responded key concepts
             self.update_responded_key_concepts(request, response_key_concept)
 
+            # Log user message
+            self.log_message(
+                request,
+                "user",
+                user_message,
+                response_key_concept,
+            )
+
             llm_response = self.get_llm_response(request, user_message)
 
             lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
@@ -250,7 +307,11 @@ class Lesson(Page, ClusterableModel):
             pass
 
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
+        # Reset lesson progress
         self.reset_lesson_progress(request)
+
+        # Create a new transcript
+        new_transcript = self.manage_transcript(request, create_new=True)
 
         context = self.get_context(request)
         context.update(
@@ -262,6 +323,7 @@ class Lesson(Page, ClusterableModel):
                 "addressed_key_concepts": [],
                 "responded_key_concepts": [],
                 "no_key_concept": NO_KEY_CONCEPT,
+                "transcript_id": new_transcript.id,
             }
         )
         reset_response = render_to_string(
@@ -274,11 +336,45 @@ class Lesson(Page, ClusterableModel):
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
 
+    def manage_transcript(
+        self,
+        request: HttpRequest,
+        create_new: bool = False,
+    ) -> Transcript:
+        if create_new or "transcript_id" not in request.session:
+            # Clear existing transcript ID if present
+            if "transcript_id" in request.session:
+                del request.session["transcript_id"]
+
+            # Create a new transcript
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
+            request.session["transcript_id"] = transcript.id
+        else:
+            transcript_id = request.session.get("transcript_id")
+            try:
+                transcript = Transcript.objects.get(id=transcript_id)
+            except Transcript.DoesNotExist:
+                # If the transcript doesn't exist, create a new one
+                transcript = Transcript.objects.create(user=request.user, lesson=self)
+                request.session["transcript_id"] = transcript.id
+
+        return transcript
+
     def render_success_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
+
+        # Retrieve the current transcript
+        transcript = self.manage_transcript(request)
+        context["transcript"] = transcript
+
+        # Clear the transcript ID from the session to ensure a new one is created next time
+        if "transcript_id" in request.session:
+            del request.session["transcript_id"]
+
         context.update(
             {
                 "key_concepts": self.key_concepts.all(),
+                "no_key_concept": NO_KEY_CONCEPT,
             }
         )
         return render(request, "lessons/lesson_success.html", context)
@@ -339,7 +435,7 @@ class Lesson(Page, ClusterableModel):
         try:
             client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
             completion = client.beta.chat.completions.parse(
-                model="gpt-4o-2024-08-06",
+                model=LLM_MODEL,
                 messages=messages,
                 response_format=ChatResponse,
             )
@@ -388,6 +484,15 @@ class Lesson(Page, ClusterableModel):
             request.session["conversation_history"] = conversation_history
             request.session["addressed_key_concepts"] = addressed_key_concepts
 
+            # Log assistant message
+            self.log_message(
+                request,
+                "assistant",
+                response_data.assistant_message,
+                response_data.addressed_key_concept,
+                LLM_MODEL,
+            )
+
             # Render the combined response
             combined_response = render_to_string(
                 "lessons/combined_htmx_response.html",
@@ -424,6 +529,32 @@ class Lesson(Page, ClusterableModel):
                     },
                 )
             )
+
+    def log_message(self, request, role, content, key_concept=None, llm_model=None):
+        transcript_id = request.session.get("transcript_id")
+        if transcript_id:
+            TranscriptMessage.objects.create(
+                transcript_id=transcript_id,
+                role=role,
+                content=content,
+                key_concept=key_concept if key_concept != NO_KEY_CONCEPT else None,
+                llm_model=llm_model if role == "assistant" else None,
+            )
+
+    def get_or_create_transcript(self, request: HttpRequest) -> Transcript:
+        if "transcript_id" not in request.session:
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
+        else:
+            transcript_id = request.session.get("transcript_id")
+            if transcript_id:
+                try:
+                    transcript = Transcript.objects.get(id=transcript_id)
+                except Transcript.DoesNotExist:
+                    transcript = Transcript.objects.create(
+                        user=request.user, lesson=self
+                    )
+        request.session["transcript_id"] = transcript.id
+        return transcript
 
     class Meta:
         verbose_name = "Language Lesson"

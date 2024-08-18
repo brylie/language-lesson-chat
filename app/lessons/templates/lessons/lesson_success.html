@@ -29,6 +29,21 @@
                 {% endfor %}
             </div>
 
+            <h2 class="mt-5 mb-3">Lesson Transcript</h2>
+            <div class="card">
+                <div class="card-body">
+                    {% for message in transcript.messages.all %}
+                        <div class="mb-3">
+                            <strong>{{ message.role|capfirst }}:</strong> 
+                            {{ message.content }}
+                            {% if message.key_concept %}
+                                <span class="badge bg-info">{{ message.key_concept }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div class="mt-5">        
                 <h3>Want to practice more?</h3>
                 <a href="{{ page.url }}" class="btn btn-primary btn-lg">Practice Again</a>
