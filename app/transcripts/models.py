@@ -1,13 +1,19 @@
 from django.db import models
-from django.conf import settings
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class Transcript(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transcripts"
+        User,
+        on_delete=models.CASCADE,
+        related_name="transcripts",
     )
     lesson = models.ForeignKey(
-        "lessons.Lesson", on_delete=models.CASCADE, related_name="transcripts"
+        "lessons.Lesson",
+        on_delete=models.CASCADE,
+        related_name="transcripts",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -26,13 +32,28 @@ class TranscriptMessage(models.Model):
     ]
 
     transcript = models.ForeignKey(
-        Transcript, on_delete=models.CASCADE, related_name="messages"
+        Transcript,
+        on_delete=models.CASCADE,
+        related_name="messages",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+    )
     content = models.TextField()
-    key_concept = models.CharField(max_length=255, blank=True, null=True)
-    llm_model = models.CharField(max_length=50, blank=True, null=True)
+    key_concept = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    llm_model = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         ordering = ["created_at"]
