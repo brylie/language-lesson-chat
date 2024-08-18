@@ -33,18 +33,24 @@
             <div class="card">
                 <div class="card-body">
                     {% for message in transcript.messages.all %}
-                        <div class="mb-3">
-                            <strong>{{ message.role|capfirst }}:</strong> 
-                            {{ message.content }}
-                            {% if message.key_concept %}
-                                <span class="badge bg-info">{{ message.key_concept }}</span>
-                            {% endif %}
+                        <div class="row mb-1">
+                            <div class="col">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1 me-3">
+                                        <strong>{{ message.role|capfirst }}:</strong> 
+                                        {{ message.content }}
+                                    </div>
+                                    {% if message.key_concept %}
+                                        <span class="badge bg-info">{{ message.key_concept }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="mt-5">        
+            <div class="mt-5 mb-5">        
                 <h3>Want to practice more?</h3>
                 <a href="{{ page.url }}" class="btn btn-primary btn-lg">Practice Again</a>
             </div>
