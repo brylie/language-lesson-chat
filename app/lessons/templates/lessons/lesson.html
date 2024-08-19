@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags static%}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -66,63 +66,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<style>
-    @media (max-width: 767.98px) {
-        #sidebar {
-            margin-bottom: 20px;
-        }
-    }
-    .image-container {
-        width: 100%;
-        max-height: 600px;
-        overflow: hidden;
-        position: relative;
-    }
-    .image-container img {
-        width: 100%;
-        height: auto;
-        object-fit: cover;
-    }
-    .chat-bubble, .chat-throbber {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .chat-bubble {
-        max-height: 150px;
-        overflow-y: auto;
-    }
-    .chat-throbber {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 60px;
-    }
-    .assistant-message {
-        margin-bottom: 10px;
-    }
-    .suggestions {
-        margin-top: 10px;
-    }
-    .suggestion {
-        cursor: pointer;
-        padding: 5px 10px;
-        margin: 5px 0;
-        background-color: #e9ecef;
-        border-radius: 5px;
-        display: inline-block;
-    }
-    #char-count {
-        display: block;
-        text-align: right;
-        margin-top: 5px;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/lesson.css' %}">
 {% endblock %}
 
 {% block extra_js %}
