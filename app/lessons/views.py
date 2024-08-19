@@ -1,14 +1,12 @@
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-import openai
 import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from openai import OpenAI
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 from .models import TranscriptMessage
-
-# Create your views here.
 
 TTS_MODEL = "tts-1"
 
@@ -23,27 +21,30 @@ class OpenAITTSVoices:
 
 
 @csrf_exempt
+@login_required
 def generate_audio(request, message_id):
     try:
         message = TranscriptMessage.objects.get(id=message_id)
+
+        # Ensure the request user is the owner of the message
+        if message.transcript.user != request.user:
+            return JsonResponse({"error": "Unauthorized"}, status=403)
+
         text = message.content
         voice = message.transcript.lesson.voice
+
+        # Check if the audio file already exists
+        speech_file_path = f"speech_{message_id}.mp3"
+
+        if default_storage.exists(speech_file_path):
+            return JsonResponse({"audio_url": default_storage.url(speech_file_path)})
 
         # Map the lesson voice to the LLM model voice
         llm_voice = map_lesson_voice_to_llm_voice(voice)
 
-        # Check if the audio file already exists
-        speech_file_path = f"speech_{message_id}.mp3"
-        if default_storage.exists(speech_file_path):
-            return JsonResponse({"audio_url": default_storage.url(speech_file_path)})
-
         # Call OpenAI text-to-speech API
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        response = openai.Audio.create(
-            model=TTS_MODEL,
-            input=text,
-            voice=llm_voice,
-        )
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.audio.create(model=TTS_MODEL, input=text, voice=llm_voice)
 
         # Save the audio to a temporary file
         speech_file_path = default_storage.save(
