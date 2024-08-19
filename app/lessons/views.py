@@ -44,7 +44,11 @@ def generate_audio(request, message_id):
 
         # Call OpenAI text-to-speech API
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        response = client.audio.create(model=TTS_MODEL, input=text, voice=llm_voice)
+        response = client.audio.speech.create(
+            model=TTS_MODEL,
+            input=text,
+            voice=llm_voice,
+        )
 
         # Save the audio to a temporary file
         speech_file_path = default_storage.save(
