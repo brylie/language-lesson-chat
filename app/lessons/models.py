@@ -11,6 +11,7 @@ import logging
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib.auth import get_user_model
 
+from .choices import CEFRLevel
 from transcripts.models import Transcript, TranscriptMessage
 
 from .llm import NO_KEY_CONCEPT, get_llm_response
@@ -77,15 +78,8 @@ class Lesson(Page, ClusterableModel):
     )
     difficulty_level = models.CharField(
         max_length=20,
-        choices=[
-            ("a1", "A1 - Beginner"),
-            ("a2", "A2 - Elementary"),
-            ("b1", "B1 - Intermediate"),
-            ("b2", "B2 - Upper Intermediate"),
-            ("c1", "C1 - Advanced"),
-            ("c2", "C2 - Proficiency"),
-        ],
-        default="a1",
+        choices=CEFRLevel.choices,
+        default=CEFRLevel.A1,
         help_text="Select the CEFR level for this lesson. This will help tailor the AI's language complexity to the student's proficiency.",
     )
     estimated_time = models.PositiveIntegerField(

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, List
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 
+from .utils import get_cefr_level_instructions
+
 logger = logging.getLogger(__name__)
 
 LLM_MODEL = "gpt-4o-2024-08-06"
@@ -29,6 +31,7 @@ class ChatResponse(BaseModel):
 
 
 def render_llm_prompt(lesson: "Lesson", conversation_history: List[dict]):
+    difficulty_level_instructions = get_cefr_level_instructions(lesson.difficulty_level)
     prompt_context = {
         "difficulty_level": lesson.get_difficulty_level_display(),
         "language": lesson.language,
@@ -36,6 +39,7 @@ def render_llm_prompt(lesson: "Lesson", conversation_history: List[dict]):
         "system_prompt": lesson.llm_system_prompt,
         "key_concepts": [concept.concept for concept in lesson.key_concepts.all()],
         "conversation_history": conversation_history,
+        "difficulty_level_instructions": difficulty_level_instructions,
     }
     return render_to_string("lessons/prompt_template.txt", prompt_context)
 
