@@ -1,9 +1,9 @@
 <div class="audio-playback" id="audio-playback-{{ message_id }}">
-    <button class="btn btn-sm btn-primary play-pause" data-message-id="{{ message_id }}">
-        <i class="bi bi-play-fill"></i>
+    <button class="btn btn-sm btn-primary play-pause" data-message-id="{{ message_id }}" aria-label="Play audio">
+        <i class="bi bi-play-fill" aria-hidden="true"></i>
     </button>
     <span class="loading-indicator d-none">
-        <i class="bi bi-arrow-repeat"></i>
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
     </span>
 </div>
 
@@ -13,12 +13,14 @@
         const loadingIndicator = document.querySelector('#audio-playback-{{ message_id }} .loading-indicator');
         let audioElement = null;
 
-        function setPlayIcon() {
-            playPauseButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+        function setPlayState() {
+            playPauseButton.querySelector('i').className = 'bi bi-play-fill';
+            playPauseButton.setAttribute('aria-label', 'Play audio');
         }
 
-        function setPauseIcon() {
-            playPauseButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+        function setPauseState() {
+            playPauseButton.querySelector('i').className = 'bi bi-pause-fill';
+            playPauseButton.setAttribute('aria-label', 'Pause audio');
         }
 
         playPauseButton.addEventListener('click', function() {
@@ -32,9 +34,9 @@
                             audioElement.addEventListener('canplay', function() {
                                 loadingIndicator.classList.add('d-none');
                                 audioElement.play();
-                                setPauseIcon();
+                                setPauseState();
                             });
-                            audioElement.addEventListener('ended', setPlayIcon);
+                            audioElement.addEventListener('ended', setPlayState);
                             audioElement.addEventListener('error', function() {
                                 loadingIndicator.classList.add('d-none');
                                 alert('Error loading audio');
@@ -51,10 +53,10 @@
             } else {
                 if (audioElement.paused) {
                     audioElement.play();
-                    setPauseIcon();
+                    setPauseState();
                 } else {
                     audioElement.pause();
-                    setPlayIcon();
+                    setPlayState();
                 }
             }
         });
