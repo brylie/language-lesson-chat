@@ -33,23 +33,23 @@
             <div class="card">
                 <div class="card-body">
                     {% for message in transcript.messages.all %}
-                        <div class="row mb-1">
-                            <div class="col">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1 me-3">
-                                        <strong>{{ message.role|capfirst }}:</strong> 
-                                        {{ message.content }}
-                                    </div>
-                                    {% if message.key_concept %}
-                                        <span class="badge bg-info">{{ message.key_concept }}</span>
-                                    {% endif %}
-                                </div>
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-auto">
                                 {% include "lessons/audio_playback.html" with message_id=message.id %}
                             </div>
+                            <div class="col">
+                                <strong>{{ message.role|capfirst }}:</strong> 
+                                {{ message.content }}
+                            </div>
+                            {% if message.key_concept %}
+                                <div class="col-auto">
+                                    <span class="badge bg-info">{{ message.key_concept }}</span>
+                                </div>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
-            </div>
+    </div>
 
             <div class="mt-5 mb-5">        
                 <h3>Want to practice more?</h3>
