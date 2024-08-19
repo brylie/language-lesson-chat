@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags static %}
+{% load wagtailcore_tags wagtailimages_tags %}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -171,5 +171,4 @@
         });
     });
 </script>
-<script src="{% static 'js/lesson.js' %}"></script>
 {% endblock %}
