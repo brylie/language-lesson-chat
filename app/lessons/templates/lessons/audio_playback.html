@@ -1,0 +1,64 @@
+<div class="audio-playback" id="audio-playback-{{ message_id }}">
+    <button class="btn btn-sm btn-primary play-pause" data-message-id="{{ message_id }}" aria-label="Play audio">
+        <i class="bi bi-play-fill" aria-hidden="true"></i>
+    </button>
+    <span class="loading-indicator d-none">
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+    </span>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const playPauseButton = document.querySelector('.play-pause[data-message-id="{{ message_id }}"]');
+        const loadingIndicator = document.querySelector('#audio-playback-{{ message_id }} .loading-indicator');
+        let audioElement = null;
+
+        function setPlayState() {
+            playPauseButton.querySelector('i').className = 'bi bi-play-fill';
+            playPauseButton.setAttribute('aria-label', 'Play audio');
+        }
+
+        function setPauseState() {
+            playPauseButton.querySelector('i').className = 'bi bi-pause-fill';
+            playPauseButton.setAttribute('aria-label', 'Pause audio');
+        }
+
+        playPauseButton.addEventListener('click', function() {
+            if (!audioElement) {
+                loadingIndicator.classList.remove('d-none');
+                fetch(`{% url 'generate_audio' message_id=message_id %}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.audio_url) {
+                            audioElement = new Audio(data.audio_url);
+                            audioElement.addEventListener('canplay', function() {
+                                loadingIndicator.classList.add('d-none');
+                                audioElement.play();
+                                setPauseState();
+                            });
+                            audioElement.addEventListener('ended', setPlayState);
+                            audioElement.addEventListener('error', function() {
+                                loadingIndicator.classList.add('d-none');
+                                alert('Error loading audio');
+                            });
+                        } else {
+                            throw new Error('No audio URL received');
+                        }
+                    })
+                    .catch(error => {
+                        loadingIndicator.classList.add('d-none');
+                        console.error('Error:', error);
+                        alert('Error loading audio');
+                    });
+            } else {
+                if (audioElement.paused) {
+                    audioElement.play();
+                    setPauseState();
+                } else {
+                    audioElement.pause();
+                    setPlayState();
+                }
+            }
+        });
+    });
+</script>
