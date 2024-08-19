@@ -13,6 +13,14 @@
         const loadingIndicator = document.querySelector('#audio-playback-{{ message_id }} .loading-indicator');
         let audioElement = null;
 
+        function setPlayIcon() {
+            playPauseButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+        }
+
+        function setPauseIcon() {
+            playPauseButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+        }
+
         playPauseButton.addEventListener('click', function() {
             if (!audioElement) {
                 loadingIndicator.classList.remove('d-none');
@@ -24,8 +32,9 @@
                             audioElement.addEventListener('canplay', function() {
                                 loadingIndicator.classList.add('d-none');
                                 audioElement.play();
-                                playPauseButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                                setPauseIcon();
                             });
+                            audioElement.addEventListener('ended', setPlayIcon);
                             audioElement.addEventListener('error', function() {
                                 loadingIndicator.classList.add('d-none');
                                 alert('Error loading audio');
@@ -42,10 +51,10 @@
             } else {
                 if (audioElement.paused) {
                     audioElement.play();
-                    playPauseButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                    setPauseIcon();
                 } else {
                     audioElement.pause();
-                    playPauseButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+                    setPlayIcon();
                 }
             }
         });
