@@ -1,0 +1,40 @@
+<div class="audio-playback" id="audio-playback-{{ message_id }}">
+    <audio id="audio-{{ message_id }}" src="{% url 'generate_audio' message_id=message_id %}"></audio>
+    <button class="btn btn-sm btn-primary play-pause" data-target="audio-{{ message_id }}">
+        <i class="bi bi-play-fill"></i>
+    </button>
+    <span class="loading-indicator d-none">
+        <i class="bi bi-arrow-repeat"></i>
+    </span>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const audioElement = document.getElementById('audio-{{ message_id }}');
+        const playPauseButton = document.querySelector('.play-pause[data-target="audio-{{ message_id }}"]');
+        const loadingIndicator = document.querySelector('#audio-playback-{{ message_id }} .loading-indicator');
+
+        playPauseButton.addEventListener('click', function() {
+            if (audioElement.paused) {
+                audioElement.play();
+                playPauseButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+            } else {
+                audioElement.pause();
+                playPauseButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+            }
+        });
+
+        audioElement.addEventListener('loadstart', function() {
+            loadingIndicator.classList.remove('d-none');
+        });
+
+        audioElement.addEventListener('canplay', function() {
+            loadingIndicator.classList.add('d-none');
+        });
+
+        audioElement.addEventListener('error', function() {
+            loadingIndicator.classList.add('d-none');
+            alert('Error loading audio');
+        });
+    });
+</script>

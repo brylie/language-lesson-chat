@@ -11,7 +11,7 @@ import logging
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib.auth import get_user_model
 
-from .choices import CEFRLevel
+from .choices import CEFRLevel, VoiceChoice, LanguageChoice
 from transcripts.models import Transcript, TranscriptMessage
 
 from .llm import NO_KEY_CONCEPT, get_llm_response
@@ -74,7 +74,14 @@ class Lesson(Page, ClusterableModel):
     )
     language = models.CharField(
         max_length=100,
+        choices=LanguageChoice.choices,
         help_text="Specify the target language for this lesson (e.g., 'English', 'Spanish', 'French'). This will help the AI assistant provide appropriate responses and suggestions.",
+    )
+    voice = models.CharField(
+        max_length=20,
+        choices=VoiceChoice.choices,
+        default=VoiceChoice.MALE,
+        help_text="Select the voice for the text-to-speech playback. This will help tailor the audio experience to the student's preference.",
     )
     difficulty_level = models.CharField(
         max_length=20,
@@ -96,6 +103,7 @@ class Lesson(Page, ClusterableModel):
         FieldPanel("cover_photo"),
         FieldPanel("location"),
         FieldPanel("language"),
+        FieldPanel("voice"),
         FieldPanel("difficulty_level"),
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
