@@ -4,3 +4,4 @@ python-dotenv>=1.0.1,<2.0.0
 openai>=1.40.5,<2.0.0
 pydantic>=2.8.2,<3.0.0
 django-htmx>=1.19.0,<2.0.0
+gunicorn>=22.0.0,<23.0.0
