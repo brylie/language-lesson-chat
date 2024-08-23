@@ -1,6 +1,31 @@
 {% load static wagtailcore_tags wagtailuserbar %}
+{% load static wagtailcore_tags %}
+{% load wagtailimages_tags %}
 
 <!DOCTYPE html>
+
+<style>
+   
+    header {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f8f9fa;
+    }
+    
+   
+    header img {
+        max-height: 60px; 
+        max-width: 200px; 
+        height: auto; 
+        width: auto; 
+    }
+</style>
+
 <html lang="en">
     <head>
         <meta charset="utf-8" />
@@ -17,27 +42,37 @@
         <meta name="description" content="{{ page.search_description }}" />
         {% endif %}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+        
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}
         <base target="_blank">
         {% endif %}
-
+        
         {# Global stylesheets #}
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
         <link rel="stylesheet" type="text/css" href="{% static 'css/core.css' %}">
+        
 
         {% block extra_css %}
         {# Override this in templates to add extra stylesheets #}
         {% endblock %}
     </head>
-
+    
     <body class="{% block body_class %}{% endblock %}">
+        <header>
+            {% with settings as branding_settings %}
+                {% if branding_settings.branding.BrandingSettings.logo %}
+                    {% image branding_settings.branding.BrandingSettings.logo original as logo_img %}
+                    <img src="{{ logo_img.url }}" alt="Company Logo">
+                {% endif %}
+            {% endwith %}
+        </header>
         {% wagtailuserbar %}
         <div class="container">
             {% block content %}{% endblock %}
         </div>
+        
 
         {# Global javascript #}
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
