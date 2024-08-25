@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from django.core.management.utils import get_random_secret_key
 import dotenv
 
 import dj_database_url
@@ -28,8 +29,11 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split("
 # Make sure to set the DJANGO_SECRET environment variable in production to a secure random value.
 # You can generate one using the following command:
 # python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
-SECRET_KEY = os.getenv("DJANGO_SECRET", "secret")
+SECRET_KEY = os.getenv("DJANGO_SECRET")
 
+if not SECRET_KEY:
+    # Generate a random secret key if one is not provided
+    SECRET_KEY = get_random_secret_key()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
