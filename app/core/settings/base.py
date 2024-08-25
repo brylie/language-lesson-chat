@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 from django.core.management.utils import get_random_secret_key
 import dotenv
@@ -34,12 +33,6 @@ SECRET_KEY = os.getenv("DJANGO_SECRET")
 if not SECRET_KEY:
     # Generate a random secret key if one is not provided
     SECRET_KEY = get_random_secret_key()
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-
-# Application definition
 
 INSTALLED_APPS = [
     "home",
@@ -124,7 +117,6 @@ else:
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -143,7 +135,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
@@ -155,7 +146,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
@@ -202,7 +192,6 @@ STORAGES = {
 
 
 # Wagtail settings
-
 WAGTAIL_SITE_NAME = "core"
 
 # Search
