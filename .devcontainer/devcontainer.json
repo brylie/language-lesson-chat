@@ -26,5 +26,8 @@
 				"ruff.formatOnPaste": true
 			}
 		}
+	},
+	"containerEnv": {
+		"DEBUG": "True"
 	}
 }

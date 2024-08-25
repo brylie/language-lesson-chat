@@ -44,6 +44,12 @@ This app caters to:
 
 We welcome contributions to enhance and expand the Language Learning AI Companion. Whether you're a developer, language expert, or enthusiastic user, your input can help improve the learning experience for people worldwide.
 
+Please read the [Contributing Guidelines](docs/CONTRIBUTING.md) for more information.
+
+## Deploy
+
+View the [Deployment Guide](docs/deploy.md) for instructions on deploying the application to DigitalOcean App Platform.
+
 ## License
 
 [European Union Public License v. 1.2](LICENSE)
