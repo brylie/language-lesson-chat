@@ -10,7 +10,7 @@ Welcome to the Language Learning AI Companion project! We're excited to have you
       - [Progressive Enhancement](#progressive-enhancement)
     - [Technology Choices and Rationale](#technology-choices-and-rationale)
       - [Core Technologies](#core-technologies)
-    - [Frontend Development](#frontend-development)
+      - [Frontend Development](#frontend-development)
       - [Development Environment](#development-environment)
       - [Deployment](#deployment)
     - [Benefits of Our Approach](#benefits-of-our-approach)
@@ -47,7 +47,7 @@ We build our application to be functional and accessible at its core, then enhan
 
 2. **Python/Django/Wagtail CMS**: Our backend is built on this mature ecosystem. It provides a robust foundation with a large community, extensive features, and long-term support, reducing the need for custom solutions or frequent major updates.
 
-### Frontend Development
+#### Frontend Development
 
 1. **Vanilla JavaScript**: We use standard JavaScript without preprocessors, bundlers, or transpilers. This simplifies our build process and ensures maximum browser compatibility.
 
