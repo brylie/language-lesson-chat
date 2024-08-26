@@ -165,9 +165,21 @@ if USE_SPACES:
     AWS_DEFAULT_ACL = "public-read"
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
-    AWS_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STATIC_URL = f"https://{AWS_S3_ENDPOINT_URL}/static/"
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{ AWS_STORAGE_BUCKET_NAME}/media/"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "core.storage_backends.MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "core.storage_backends.StaticStorage",
+        },
+    }
+
+    # Prevent setting URL querystring parameters
+    # which are causing 403 errors on DigitalOcean Spaces
+    AWS_QUERYSTRING_AUTH = False
 else:
     STATIC_ROOT = os.path.join(BASE_DIR, "static")
     STATIC_URL = "/static/"
@@ -185,9 +197,8 @@ else:
             "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
         },
     }
-
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+    MEDIA_URL = "/media/"
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "core"
