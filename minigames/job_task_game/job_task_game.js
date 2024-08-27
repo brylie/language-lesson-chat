@@ -31,80 +31,99 @@ export default class JobTaskGame extends Phaser.Scene {
 
         this.cameras.main.setBackgroundColor('#2C3E50');
 
-        this.add.text(width / 2, 50, this.taskData.name, {
-            fontSize: '36px',
+        // Header row
+        const headerHeight = height * 0.25;
+        this.createHeader(width, headerHeight);
+
+        // Steps row
+        const stepsHeight = height * 0.65;
+        this.createSteps(width, headerHeight, stepsHeight);
+
+        // Footer row
+        const footerHeight = height * 0.1;
+        this.createFooter(width, height - footerHeight, footerHeight);
+    }
+
+    createHeader(width, height) {
+        const padding = 20;
+
+        // Title and description
+        const titleText = this.add.text(padding, padding, this.taskData.name, {
+            fontSize: '32px',
             fontFamily: 'Arial',
             color: '#ECF0F1',
             fontWeight: 'bold'
-        }).setOrigin(0.5);
+        });
 
-        this.add.text(width / 2, 100, this.taskData.description, {
-            fontSize: '20px',
+        const descriptionText = this.add.text(padding, titleText.y + titleText.height + 10, this.taskData.description, {
+            fontSize: '18px',
             fontFamily: 'Arial',
-            color: '#BDC3C7'
-        }).setOrigin(0.5);
+            color: '#BDC3C7',
+            wordWrap: { width: width * 0.6 }
+        });
 
-        const taskImage = this.add.image(width - 120, 100, 'taskImage').setOrigin(0.5);
-        taskImage.setScale(Math.min(180 / taskImage.width, 180 / taskImage.height));
+        // Task image
+        const imageWidth = width * 0.3;
+        const imageHeight = height - padding * 2;
+        const taskImage = this.add.image(width - padding, padding, 'taskImage')
+            .setOrigin(1, 0);
 
-        const gridBaseY = 200;
-        const spacing = 100;
+        // Preserve aspect ratio
+        const scale = Math.min(imageWidth / taskImage.width, imageHeight / taskImage.height);
+        taskImage.setScale(scale);
+    }
+
+    createSteps(width, startY, height) {
+        const padding = 20;
+        const stepWidth = width - padding * 2;
+        const stepHeight = 70;
+        const spacing = 10;
 
         const shuffledSteps = Phaser.Utils.Array.Shuffle(this.taskData.steps.slice());
 
         shuffledSteps.forEach((step, index) => {
-            const stepElement = this.createStepElement(step, width / 2, gridBaseY + index * spacing);
+            const y = startY + padding + index * (stepHeight + spacing);
+            const stepElement = this.createStepElement(step, width / 2, y, stepWidth, stepHeight);
             this.stepElements.push(stepElement);
         });
 
-        // Initially update arrows
         this.updateArrows();
-
-        this.createCheckButton(width / 2, height - 50);
     }
 
-    createStepElement(step, x, y) {
+    createStepElement(step, x, y, width, height) {
         const stepElement = this.add.container(x, y);
 
-        const bg = this.add.rectangle(0, 0, 500, 80, 0x34495E, 1).setOrigin(0.5);
+        const bg = this.add.rectangle(0, 0, width, height, 0x34495E, 1).setOrigin(0.5);
         bg.setStrokeStyle(2, 0x2980B9);
 
-        const image = this.add.image(-210, 0, step.name).setOrigin(0.5);
-        const scaleFactor = Math.min(70 / image.width, 70 / image.height);
+        const image = this.add.image(-width / 2 + height / 2, 0, step.name).setOrigin(0.5);
+        const scaleFactor = Math.min((height - 10) / image.height, (height - 10) / image.width);
         image.setScale(scaleFactor);
 
-        const text = this.add.text(10, 0, step.name, {
-            fontSize: '20px',
+        const text = this.add.text(10 - width / 2 + height, 0, step.name, {
+            fontSize: '18px',
             fontFamily: 'Arial',
             color: '#ECF0F1'
         }).setOrigin(0, 0.5);
 
-        // Increase the size of the up and down arrow buttons
-        const arrowScale = 1.5;  // Adjust the scale to make the arrows larger
-        const arrowTint = 0xBDC3C7;  // Light grey color
+        const arrowScale = 1.2;
+        const arrowTint = 0xBDC3C7;
 
-        const upArrow = this.add.image(230, -20, 'up_arrow')
+        const upArrow = this.add.image(width / 2 - 30, -height / 4, 'up_arrow')
             .setInteractive({ useHandCursor: true })
             .setScale(arrowScale)
             .setTint(arrowTint);
 
-        const downArrow = this.add.image(230, 20, 'down_arrow')
+        const downArrow = this.add.image(width / 2 - 30, height / 4, 'down_arrow')
             .setInteractive({ useHandCursor: true })
             .setScale(arrowScale)
             .setTint(arrowTint);
 
-        // Set up click event for up arrow
-        upArrow.on('pointerdown', () => {
-            this.moveStepUp(stepElement);
-        });
-
-        // Set up click event for down arrow
-        downArrow.on('pointerdown', () => {
-            this.moveStepDown(stepElement);
-        });
+        upArrow.on('pointerdown', () => this.moveStepUp(stepElement));
+        downArrow.on('pointerdown', () => this.moveStepDown(stepElement));
 
         stepElement.add([ bg, image, text, upArrow, downArrow ]);
-        stepElement.setSize(200, 80);
+        stepElement.setSize(width, height);
 
         stepElement.upArrow = upArrow;
         stepElement.downArrow = downArrow;
@@ -113,10 +132,13 @@ export default class JobTaskGame extends Phaser.Scene {
         return stepElement;
     }
 
+    createFooter(width, y, height) {
+        this.createCheckButton(width / 2, y + height / 2);
+    }
+
     moveStepUp(stepElement) {
         const index = this.stepElements.indexOf(stepElement);
         if (index > 0) {
-            // Swap positions with the item above
             const aboveElement = this.stepElements[ index - 1 ];
             this.swapElements(stepElement, aboveElement);
             this.updateArrows();
@@ -126,7 +148,6 @@ export default class JobTaskGame extends Phaser.Scene {
     moveStepDown(stepElement) {
         const index = this.stepElements.indexOf(stepElement);
         if (index < this.stepElements.length - 1) {
-            // Swap positions with the item below
             const belowElement = this.stepElements[ index + 1 ];
             this.swapElements(stepElement, belowElement);
             this.updateArrows();
@@ -134,30 +155,20 @@ export default class JobTaskGame extends Phaser.Scene {
     }
 
     swapElements(element1, element2) {
-        // Swap the y positions
         const tempY = element1.y;
         element1.y = element2.y;
         element2.y = tempY;
 
-        // Swap their positions in the stepElements array
         const index1 = this.stepElements.indexOf(element1);
         const index2 = this.stepElements.indexOf(element2);
 
         this.stepElements[ index1 ] = element2;
         this.stepElements[ index2 ] = element1;
 
-        // Animate the swap
         this.tweens.add({
-            targets: element1,
-            y: element1.y,
-            duration: 300,
-            ease: 'Power2'
-        });
-
-        this.tweens.add({
-            targets: element2,
-            y: element2.y,
-            duration: 300,
+            targets: [ element1, element2 ],
+            y: element => element.y,
+            duration: 200,
             ease: 'Power2'
         });
     }
@@ -169,54 +180,27 @@ export default class JobTaskGame extends Phaser.Scene {
         });
     }
 
-    checkOrder(draggedElement) {
-        const sortedElements = this.stepElements.slice().sort((a, b) => a.y - b.y);
-
-        const baseY = 200;
-        const spacing = 100;
-
-        sortedElements.forEach((element, index) => {
-            const targetY = baseY + index * spacing;
-            const targetX = this.dropArea.x;
-
-            if (element !== draggedElement) {
-                this.tweens.add({
-                    targets: element,
-                    x: targetX,
-                    y: targetY,
-                    duration: 300,
-                    ease: 'Power2'
-                });
-            } else {
-                // Snap dragged element into place when dropped
-                draggedElement.x = targetX;
-                draggedElement.y = targetY;
-            }
-        });
-    }
-
     createCheckButton(x, y) {
+        const buttonWidth = 180;
+        const buttonHeight = 50;
+
         const button = this.add.container(x, y);
-        const bg = this.add.rectangle(0, 0, 200, 60, 0x27AE60, 1).setOrigin(0.5);
+        const bg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x27AE60, 1).setOrigin(0.5);
         const text = this.add.text(0, 0, 'Check Order', {
-            fontSize: '24px',
+            fontSize: '20px',
             fontFamily: 'Arial',
             color: '#ECF0F1'
         }).setOrigin(0.5);
 
         button.add([ bg, text ]);
-        button.setSize(200, 60);
-        button.setInteractive(new Phaser.Geom.Rectangle(-100, -30, 200, 60), Phaser.Geom.Rectangle.Contains);
 
-        button.on('pointerover', () => {
-            bg.setFillStyle(0x2ECC71);
-        });
-        button.on('pointerout', () => {
-            bg.setFillStyle(0x27AE60);
-        });
-        button.on('pointerdown', () => {
-            this.validateOrder();
-        });
+        // Create a larger hit area for the button
+        const hitArea = new Phaser.Geom.Rectangle(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight);
+        button.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+
+        button.on('pointerover', () => bg.setFillStyle(0x2ECC71));
+        button.on('pointerout', () => bg.setFillStyle(0x27AE60));
+        button.on('pointerdown', () => this.validateOrder());
 
         return button;
     }
@@ -237,13 +221,13 @@ export default class JobTaskGame extends Phaser.Scene {
         const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setOrigin(0.5);
         const feedback = this.add.container(width / 2, height / 2);
 
-        const bg = this.add.rectangle(0, 0, 400, 200, color, 1).setOrigin(0.5);
+        const bg = this.add.rectangle(0, 0, width * 0.8, height * 0.3, color, 1).setOrigin(0.5);
         const text = this.add.text(0, 0, message, {
             fontSize: '24px',
             fontFamily: 'Arial',
             color: '#ECF0F1',
             align: 'center',
-            wordWrap: { width: 380 }
+            wordWrap: { width: width * 0.7 }
         }).setOrigin(0.5);
 
         feedback.add([ bg, text ]);
