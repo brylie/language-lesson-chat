@@ -22,8 +22,6 @@ export default class JobTaskGame extends Phaser.Scene {
         this.taskData.steps.forEach(step => {
             this.load.image(step.name, step.image);
         });
-        this.load.image('up_arrow', 'assets/arrow_up.svg');
-        this.load.image('down_arrow', 'assets/arrow_down.svg');
     }
 
     create() {
@@ -106,27 +104,48 @@ export default class JobTaskGame extends Phaser.Scene {
             color: '#ECF0F1'
         }).setOrigin(0, 0.5);
 
-        const arrowScale = 1.2;
+        const triangleSize = 15;
         const arrowTint = 0xBDC3C7;
 
-        const upArrow = this.add.image(width / 2 - 30, -height / 4, 'up_arrow')
-            .setInteractive({ useHandCursor: true })
-            .setScale(arrowScale)
-            .setTint(arrowTint);
+        // Create up triangle
+        const upTriangle = this.add.graphics();
+        upTriangle.fillStyle(arrowTint, 1);
+        upTriangle.beginPath();
+        upTriangle.moveTo(0, -triangleSize / 2); // Top vertex
+        upTriangle.lineTo(-triangleSize / 2, triangleSize / 2); // Bottom left vertex
+        upTriangle.lineTo(triangleSize / 2, triangleSize / 2); // Bottom right vertex
+        upTriangle.closePath();
+        upTriangle.fillPath();
+        upTriangle.setPosition(width / 2 - 30, -height / 4);
 
-        const downArrow = this.add.image(width / 2 - 30, height / 4, 'down_arrow')
-            .setInteractive({ useHandCursor: true })
-            .setScale(arrowScale)
-            .setTint(arrowTint);
+        // Define hit area for the up triangle
+        const upTriangleHitArea = new Phaser.Geom.Triangle(0, -triangleSize / 2, -triangleSize / 2, triangleSize / 2, triangleSize / 2, triangleSize / 2);
+        upTriangle.setInteractive(upTriangleHitArea, Phaser.Geom.Triangle.Contains);
 
-        upArrow.on('pointerdown', () => this.moveStepUp(stepElement));
-        downArrow.on('pointerdown', () => this.moveStepDown(stepElement));
+        // Create down triangle
+        const downTriangle = this.add.graphics();
+        downTriangle.fillStyle(arrowTint, 1);
+        downTriangle.beginPath();
+        downTriangle.moveTo(0, triangleSize / 2); // Bottom vertex
+        downTriangle.lineTo(-triangleSize / 2, -triangleSize / 2); // Top left vertex
+        downTriangle.lineTo(triangleSize / 2, -triangleSize / 2); // Top right vertex
+        downTriangle.closePath();
+        downTriangle.fillPath();
+        downTriangle.setPosition(width / 2 - 30, height / 4);
 
-        stepElement.add([ bg, image, text, upArrow, downArrow ]);
+        // Define hit area for the down triangle
+        const downTriangleHitArea = new Phaser.Geom.Triangle(0, triangleSize / 2, -triangleSize / 2, -triangleSize / 2, triangleSize / 2, -triangleSize / 2);
+        downTriangle.setInteractive(downTriangleHitArea, Phaser.Geom.Triangle.Contains);
+
+        // Set up interaction
+        upTriangle.on('pointerdown', () => this.moveStepUp(stepElement));
+        downTriangle.on('pointerdown', () => this.moveStepDown(stepElement));
+
+        stepElement.add([ bg, image, text, upTriangle, downTriangle ]);
         stepElement.setSize(width, height);
 
-        stepElement.upArrow = upArrow;
-        stepElement.downArrow = downArrow;
+        stepElement.upTriangle = upTriangle;
+        stepElement.downTriangle = downTriangle;
         stepElement.stepData = step;
 
         return stepElement;
@@ -175,8 +194,8 @@ export default class JobTaskGame extends Phaser.Scene {
 
     updateArrows() {
         this.stepElements.forEach((element, index) => {
-            element.upArrow.setVisible(index > 0);
-            element.downArrow.setVisible(index < this.stepElements.length - 1);
+            element.upTriangle.setVisible(index > 0);
+            element.downTriangle.setVisible(index < this.stepElements.length - 1);
         });
     }
 
