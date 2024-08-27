@@ -69,7 +69,7 @@ export default class JobTaskGame extends Phaser.Scene {
         const bg = this.add.rectangle(0, 0, 500, 80, 0x34495E, 1).setOrigin(0.5);
         bg.setStrokeStyle(2, 0x2980B9);
 
-        const image = this.add.image(-220, 0, step.name).setOrigin(0.5);
+        const image = this.add.image(-210, 0, step.name).setOrigin(0.5);
         const scaleFactor = Math.min(70 / image.width, 70 / image.height);
         image.setScale(scaleFactor);
 
@@ -83,12 +83,12 @@ export default class JobTaskGame extends Phaser.Scene {
         const arrowScale = 1.5;  // Adjust the scale to make the arrows larger
         const arrowTint = 0xBDC3C7;  // Light grey color
 
-        const upArrow = this.add.image(220, -20, 'up_arrow')
+        const upArrow = this.add.image(230, -20, 'up_arrow')
             .setInteractive({ useHandCursor: true })
             .setScale(arrowScale)
             .setTint(arrowTint);
 
-        const downArrow = this.add.image(220, 20, 'down_arrow')
+        const downArrow = this.add.image(230, 20, 'down_arrow')
             .setInteractive({ useHandCursor: true })
             .setScale(arrowScale)
             .setTint(arrowTint);
@@ -104,7 +104,7 @@ export default class JobTaskGame extends Phaser.Scene {
         });
 
         stepElement.add([ bg, image, text, upArrow, downArrow ]);
-        stepElement.setSize(500, 80);
+        stepElement.setSize(200, 80);
 
         stepElement.upArrow = upArrow;
         stepElement.downArrow = downArrow;
