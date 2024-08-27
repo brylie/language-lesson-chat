@@ -79,9 +79,19 @@ export default class JobTaskGame extends Phaser.Scene {
             color: '#ECF0F1'
         }).setOrigin(0, 0.5);
 
-        // Add up and down arrow buttons
-        const upArrow = this.add.image(220, -20, 'up_arrow').setInteractive({ useHandCursor: true }).setScale(0.6);
-        const downArrow = this.add.image(220, 20, 'down_arrow').setInteractive({ useHandCursor: true }).setScale(0.6);
+        // Increase the size of the up and down arrow buttons
+        const arrowScale = 1.5;  // Adjust the scale to make the arrows larger
+        const arrowTint = 0xBDC3C7;  // Light grey color
+
+        const upArrow = this.add.image(220, -20, 'up_arrow')
+            .setInteractive({ useHandCursor: true })
+            .setScale(arrowScale)
+            .setTint(arrowTint);
+
+        const downArrow = this.add.image(220, 20, 'down_arrow')
+            .setInteractive({ useHandCursor: true })
+            .setScale(arrowScale)
+            .setTint(arrowTint);
 
         // Set up click event for up arrow
         upArrow.on('pointerdown', () => {
