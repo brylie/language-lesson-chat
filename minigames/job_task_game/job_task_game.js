@@ -22,16 +22,15 @@ export default class JobTaskGame extends Phaser.Scene {
         this.taskData.steps.forEach(step => {
             this.load.image(step.name, step.image);
         });
-        this.load.image('dragHandle', 'assets/arrow_down_up.svg');
+        this.load.image('up_arrow', 'assets/arrow_up.svg');
+        this.load.image('down_arrow', 'assets/arrow_down.svg');
     }
 
     create() {
         const { width, height } = this.scale;
 
-        // Set background color
         this.cameras.main.setBackgroundColor('#2C3E50');
 
-        // Add task information
         this.add.text(width / 2, 50, this.taskData.name, {
             fontSize: '36px',
             fontFamily: 'Arial',
@@ -48,25 +47,19 @@ export default class JobTaskGame extends Phaser.Scene {
         const taskImage = this.add.image(width - 120, 100, 'taskImage').setOrigin(0.5);
         taskImage.setScale(Math.min(180 / taskImage.width, 180 / taskImage.height));
 
-        // Define the bounds for the steps
-        this.dropArea = this.add.rectangle(width / 2, height / 2 + 50, 550, 400, 0x34495E, 0).setOrigin(0.5);
-
-        // Create step elements
-        const shuffledSteps = Phaser.Utils.Array.Shuffle(this.taskData.steps.slice());
-        const baseY = 200;
+        const gridBaseY = 200;
         const spacing = 100;
 
+        const shuffledSteps = Phaser.Utils.Array.Shuffle(this.taskData.steps.slice());
+
         shuffledSteps.forEach((step, index) => {
-            const stepElement = this.createStepElement(step, width / 2, baseY + index * spacing);
+            const stepElement = this.createStepElement(step, width / 2, gridBaseY + index * spacing);
             this.stepElements.push(stepElement);
         });
 
-        // Add drag events
-        this.input.on('dragstart', this.onDragStart, this);
-        this.input.on('drag', this.onDrag, this);
-        this.input.on('dragend', this.onDragEnd, this);
+        // Initially update arrows
+        this.updateArrows();
 
-        // Add "Check Order" button
         this.createCheckButton(width / 2, height - 50);
     }
 
@@ -86,82 +79,83 @@ export default class JobTaskGame extends Phaser.Scene {
             color: '#ECF0F1'
         }).setOrigin(0, 0.5);
 
-        const dragHandle = this.add.image(230, 0, 'dragHandle').setScale(0.6);
+        // Add up and down arrow buttons
+        const upArrow = this.add.image(220, -20, 'up_arrow').setInteractive({ useHandCursor: true }).setScale(0.6);
+        const downArrow = this.add.image(220, 20, 'down_arrow').setInteractive({ useHandCursor: true }).setScale(0.6);
 
-        stepElement.add([ bg, image, text, dragHandle ]);
+        // Set up click event for up arrow
+        upArrow.on('pointerdown', () => {
+            this.moveStepUp(stepElement);
+        });
+
+        // Set up click event for down arrow
+        downArrow.on('pointerdown', () => {
+            this.moveStepDown(stepElement);
+        });
+
+        stepElement.add([ bg, image, text, upArrow, downArrow ]);
         stepElement.setSize(500, 80);
 
-        // Make the entire stepElement interactive and draggable
-        stepElement.setInteractive({ useHandCursor: true });
-        this.input.setDraggable(stepElement);
-
-        // Add hover effect
-        stepElement.on('pointerover', () => {
-            bg.setStrokeStyle(3, 0x3498DB);
-            this.tweens.add({
-                targets: stepElement,
-                scaleX: 1.02,
-                scaleY: 1.02,
-                duration: 100,
-                ease: 'Power2'
-            });
-        });
-
-        stepElement.on('pointerout', () => {
-            bg.setStrokeStyle(2, 0x2980B9);
-            this.tweens.add({
-                targets: stepElement,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 100,
-                ease: 'Power2'
-            });
-        });
-
-        stepElement.originalY = stepElement.y;
+        stepElement.upArrow = upArrow;
+        stepElement.downArrow = downArrow;
         stepElement.stepData = step;
 
         return stepElement;
     }
 
-    onDragStart(pointer, gameObject) {
-        gameObject.list[ 0 ].setStrokeStyle(3, 0x3498DB);
-        gameObject.depth = 1;
+    moveStepUp(stepElement) {
+        const index = this.stepElements.indexOf(stepElement);
+        if (index > 0) {
+            // Swap positions with the item above
+            const aboveElement = this.stepElements[ index - 1 ];
+            this.swapElements(stepElement, aboveElement);
+            this.updateArrows();
+        }
+    }
+
+    moveStepDown(stepElement) {
+        const index = this.stepElements.indexOf(stepElement);
+        if (index < this.stepElements.length - 1) {
+            // Swap positions with the item below
+            const belowElement = this.stepElements[ index + 1 ];
+            this.swapElements(stepElement, belowElement);
+            this.updateArrows();
+        }
+    }
+
+    swapElements(element1, element2) {
+        // Swap the y positions
+        const tempY = element1.y;
+        element1.y = element2.y;
+        element2.y = tempY;
+
+        // Swap their positions in the stepElements array
+        const index1 = this.stepElements.indexOf(element1);
+        const index2 = this.stepElements.indexOf(element2);
+
+        this.stepElements[ index1 ] = element2;
+        this.stepElements[ index2 ] = element1;
+
+        // Animate the swap
         this.tweens.add({
-            targets: gameObject,
-            scaleX: 1.05,
-            scaleY: 1.05,
-            duration: 200,
+            targets: element1,
+            y: element1.y,
+            duration: 300,
+            ease: 'Power2'
+        });
+
+        this.tweens.add({
+            targets: element2,
+            y: element2.y,
+            duration: 300,
             ease: 'Power2'
         });
     }
 
-    onDrag(pointer, gameObject, dragX, dragY) {
-        const dropAreaBounds = this.dropArea.getBounds();
-
-        // Constrain the drag within the drop area bounds
-        const constrainedX = Phaser.Math.Clamp(dragX, dropAreaBounds.left, dropAreaBounds.right);
-        const constrainedY = Phaser.Math.Clamp(dragY, dropAreaBounds.top, dropAreaBounds.bottom);
-
-        gameObject.x = constrainedX;
-        gameObject.y = constrainedY;
-
-        this.checkOrder(gameObject);
-    }
-
-    onDragEnd(pointer, gameObject) {
-        gameObject.list[ 0 ].setStrokeStyle(2, 0x2980B9);
-        gameObject.depth = 0;
-
-        // Snap to grid
-        this.checkOrder(gameObject);
-
-        this.tweens.add({
-            targets: gameObject,
-            scaleX: 1,
-            scaleY: 1,
-            duration: 200,
-            ease: 'Power2'
+    updateArrows() {
+        this.stepElements.forEach((element, index) => {
+            element.upArrow.setVisible(index > 0);
+            element.downArrow.setVisible(index < this.stepElements.length - 1);
         });
     }
 
