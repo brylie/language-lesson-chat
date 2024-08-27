@@ -73,10 +73,7 @@ export default class JobTaskGame extends Phaser.Scene {
         const bg = this.add.rectangle(0, 0, 500, 80, 0x34495E, 1).setOrigin(0.5);
         bg.setStrokeStyle(2, 0x2980B9);
 
-        // Add the image without masking
         const image = this.add.image(-220, 0, step.name).setOrigin(0.5);
-
-        // Scale the image to fit within a 70x70 area
         const scaleFactor = Math.min(70 / image.width, 70 / image.height);
         image.setScale(scaleFactor);
 
@@ -90,8 +87,33 @@ export default class JobTaskGame extends Phaser.Scene {
 
         stepElement.add([ bg, image, text, dragHandle ]);
         stepElement.setSize(500, 80);
-        stepElement.setInteractive(new Phaser.Geom.Rectangle(-250, -40, 500, 80), Phaser.Geom.Rectangle.Contains);
+
+        // Make the entire stepElement interactive and draggable
+        stepElement.setInteractive({ useHandCursor: true });
         this.input.setDraggable(stepElement);
+
+        // Add hover effect
+        stepElement.on('pointerover', () => {
+            bg.setStrokeStyle(3, 0x3498DB);
+            this.tweens.add({
+                targets: stepElement,
+                scaleX: 1.02,
+                scaleY: 1.02,
+                duration: 100,
+                ease: 'Power2'
+            });
+        });
+
+        stepElement.on('pointerout', () => {
+            bg.setStrokeStyle(2, 0x2980B9);
+            this.tweens.add({
+                targets: stepElement,
+                scaleX: 1,
+                scaleY: 1,
+                duration: 100,
+                ease: 'Power2'
+            });
+        });
 
         stepElement.originalY = stepElement.y;
         stepElement.stepData = step;
