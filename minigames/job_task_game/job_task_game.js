@@ -151,6 +151,15 @@ export default class JobTaskGame extends Phaser.Scene {
         const hitArea = new Phaser.Geom.Rectangle(-hitAreaSize / 2, -hitAreaSize / 2, hitAreaSize, hitAreaSize);
         triangle.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
 
+        // Add pointer cursor on hover
+        triangle.on('pointerover', () => {
+            this.input.manager.canvas.style.cursor = 'pointer';
+        });
+
+        triangle.on('pointerout', () => {
+            this.input.manager.canvas.style.cursor = 'default';
+        });
+
         return triangle;
     }
 
