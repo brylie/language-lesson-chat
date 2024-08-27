@@ -48,6 +48,9 @@ export default class JobTaskGame extends Phaser.Scene {
         const taskImage = this.add.image(width - 120, 100, 'taskImage').setOrigin(0.5);
         taskImage.setScale(Math.min(180 / taskImage.width, 180 / taskImage.height));
 
+        // Define the bounds for the steps
+        this.dropArea = this.add.rectangle(width / 2, height / 2 + 50, 550, 400, 0x34495E, 0).setOrigin(0.5);
+
         // Create step elements
         const shuffledSteps = Phaser.Utils.Array.Shuffle(this.taskData.steps.slice());
         const baseY = 200;
@@ -134,13 +137,25 @@ export default class JobTaskGame extends Phaser.Scene {
     }
 
     onDrag(pointer, gameObject, dragX, dragY) {
-        gameObject.y = dragY;
+        const dropAreaBounds = this.dropArea.getBounds();
+
+        // Constrain the drag within the drop area bounds
+        const constrainedX = Phaser.Math.Clamp(dragX, dropAreaBounds.left, dropAreaBounds.right);
+        const constrainedY = Phaser.Math.Clamp(dragY, dropAreaBounds.top, dropAreaBounds.bottom);
+
+        gameObject.x = constrainedX;
+        gameObject.y = constrainedY;
+
         this.checkOrder(gameObject);
     }
 
     onDragEnd(pointer, gameObject) {
         gameObject.list[ 0 ].setStrokeStyle(2, 0x2980B9);
         gameObject.depth = 0;
+
+        // Snap to grid
+        this.checkOrder(gameObject);
+
         this.tweens.add({
             targets: gameObject,
             scaleX: 1,
@@ -148,21 +163,30 @@ export default class JobTaskGame extends Phaser.Scene {
             duration: 200,
             ease: 'Power2'
         });
-        this.checkOrder(gameObject);
     }
 
     checkOrder(draggedElement) {
         const sortedElements = this.stepElements.slice().sort((a, b) => a.y - b.y);
 
+        const baseY = 200;
+        const spacing = 100;
+
         sortedElements.forEach((element, index) => {
-            const targetY = index * 100 + 200;
+            const targetY = baseY + index * spacing;
+            const targetX = this.dropArea.x;
+
             if (element !== draggedElement) {
                 this.tweens.add({
                     targets: element,
+                    x: targetX,
                     y: targetY,
                     duration: 300,
                     ease: 'Power2'
                 });
+            } else {
+                // Snap dragged element into place when dropped
+                draggedElement.x = targetX;
+                draggedElement.y = targetY;
             }
         });
     }
