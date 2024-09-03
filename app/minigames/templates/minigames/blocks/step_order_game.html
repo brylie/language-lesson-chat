@@ -3,29 +3,31 @@
 <div class="step-order-game" id="step-order-game-{{ id }}">
     <h2>{{ value.title }}</h2>
     <p>{{ value.description }}</p>
-    {% image value.main_image width-800 as main_image %}
-    <img src="{{ request.build_absolute_uri }}{{ main_image.url }}" alt="{{ value.title }}" width="{{ main_image.width }}" height="{{ main_image.height }}">
+
     <div id="step-order-game-container-{{ id }}"></div>
 </div>
 
 <script type="module">
     import StepOrderGame from "{% static 'js/step_order_game.js' %}";
 
+    {% image value.main_image width-800 as main_image %}
+
     document.addEventListener('DOMContentLoaded', function() {
         const gameConfig = {
             title: "{{ value.title|escapejs }}",
             description: "{{ value.description|escapejs }}",
             main_image: {
-                url: "{{ request.build_absolute_uri }}{{ main_image.url }}",
+                url: "{{ main_image.url }}",
                 width: {{ main_image.width }},
                 height: {{ main_image.height }}
             },
             steps: [
                 {% for step in value.steps %}
+                {% image step.image width-400 as step_image %}
                 {
                     name: "{{ step.name|escapejs }}",
                     image: {
-                        url: "{% image step.image width-400 as step_image %}{{ request.build_absolute_uri }}{{ step_image.url }}",
+                        url: "{{ step_image.url }}",
                         width: {{ step_image.width }},
                         height: {{ step_image.height }}
                     },
