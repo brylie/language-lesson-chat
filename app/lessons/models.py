@@ -110,6 +110,11 @@ class ChatLesson(Page, ClusterableModel):
         InlinePanel("key_concepts", label="Key Concepts"),
     ]
 
+    class Meta:
+        verbose_name = "Chat Lesson"
+        verbose_name_plural = "Chat Lessons"
+        db_table = "chat_lessons"
+
     def get_context(self, request: HttpRequest) -> dict:
         context = super().get_context(request)
         context["key_concepts"] = self.key_concepts.all()
