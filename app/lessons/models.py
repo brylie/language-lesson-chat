@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from wagtail.models import Page
-from wagtail.fields import RichTextField
+from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -11,6 +11,7 @@ import logging
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib.auth import get_user_model
 
+from minigames.blocks import StepOrderGameBlock
 from .choices import CEFRLevel, VoiceChoice, LanguageChoice
 from transcripts.models import Transcript, TranscriptMessage
 
@@ -97,6 +98,9 @@ class ChatLesson(Page, ClusterableModel):
         verbose_name="LLM System Prompt",
         help_text="Provide specific instructions for the AI assistant's behavior in this lesson. For example, 'You are a friendly barista in a busy coffee shop. Engage the student in small talk and help them order a drink.'",
     )
+    minigames = StreamField([
+        ('step_order_game', StepOrderGameBlock()),
+    ], blank=True, use_json_field=True,)
 
     content_panels = Page.content_panels + [
         FieldPanel("intro"),
@@ -108,6 +112,7 @@ class ChatLesson(Page, ClusterableModel):
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
         InlinePanel("key_concepts", label="Key Concepts"),
+        FieldPanel('minigames'),
     ]
 
     class Meta:
