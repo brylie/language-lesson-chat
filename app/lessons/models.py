@@ -31,7 +31,7 @@ User = get_user_model()
 
 class KeyConcept(models.Model):
     lesson = ParentalKey(
-        "Lesson", related_name="key_concepts", on_delete=models.CASCADE
+        "ChatLesson", related_name="key_concepts", on_delete=models.CASCADE,
     )
     concept = models.CharField(
         max_length=255,
@@ -55,7 +55,7 @@ class KeyConcept(models.Model):
         return self.concept
 
 
-class Lesson(Page, ClusterableModel):
+class ChatLesson(Page, ClusterableModel):
     intro = RichTextField(
         blank=True,
         help_text="Provide a brief introduction to the lesson. This will be shown to the student before they start the interactive dialogue.",
@@ -159,7 +159,8 @@ class Lesson(Page, ClusterableModel):
 
             llm_response = self.get_llm_response(request, user_message)
 
-            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+            lesson_is_complete = self.user_has_responded_to_all_key_concepts(
+                request)
             if lesson_is_complete:
                 return self.handle_lesson_completion(request)
 
@@ -224,7 +225,8 @@ class Lesson(Page, ClusterableModel):
                 del request.session["transcript_id"]
 
             # Create a new transcript
-            transcript = Transcript.objects.create(user=request.user, lesson=self)
+            transcript = Transcript.objects.create(
+                user=request.user, lesson=self)
             request.session["transcript_id"] = transcript.id
         else:
             transcript_id = request.session.get("transcript_id")
@@ -232,7 +234,8 @@ class Lesson(Page, ClusterableModel):
                 transcript = Transcript.objects.get(id=transcript_id)
             except Transcript.DoesNotExist:
                 # If the transcript doesn't exist, create a new one
-                transcript = Transcript.objects.create(user=request.user, lesson=self)
+                transcript = Transcript.objects.create(
+                    user=request.user, lesson=self)
                 request.session["transcript_id"] = transcript.id
 
         return transcript
@@ -264,7 +267,8 @@ class Lesson(Page, ClusterableModel):
         """
         Update the list of key concepts that the user has responded to.
         """
-        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        responded_key_concepts = request.session.get(
+            "responded_key_concepts", [])
         if (
             response_key_concept
             and response_key_concept != NO_KEY_CONCEPT
@@ -277,8 +281,10 @@ class Lesson(Page, ClusterableModel):
         """
         Check if the user has responded to all key concepts in the lesson.
         """
-        lesson_key_concepts = [concept.concept for concept in self.key_concepts.all()]
-        responded_key_concepts = request.session.get("responded_key_concepts", [])
+        lesson_key_concepts = [
+            concept.concept for concept in self.key_concepts.all()]
+        responded_key_concepts = request.session.get(
+            "responded_key_concepts", [])
         return set(lesson_key_concepts) == set(responded_key_concepts)
 
     def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
@@ -297,7 +303,8 @@ class Lesson(Page, ClusterableModel):
 
     def get_or_create_transcript(self, request: HttpRequest) -> Transcript:
         if "transcript_id" not in request.session:
-            transcript = Transcript.objects.create(user=request.user, lesson=self)
+            transcript = Transcript.objects.create(
+                user=request.user, lesson=self)
         else:
             transcript_id = request.session.get("transcript_id")
             if transcript_id:
