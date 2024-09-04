@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from wagtail.models import Page
 from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.models import Orderable
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 import logging
@@ -30,7 +31,7 @@ START_OVER_PARAM = "start_over"
 User = get_user_model()
 
 
-class KeyConcept(models.Model):
+class KeyConcept(Orderable):
     lesson = ParentalKey(
         "ChatLesson", related_name="key_concepts", on_delete=models.CASCADE,
     )
@@ -54,6 +55,9 @@ class KeyConcept(models.Model):
 
     def __str__(self):
         return self.concept
+
+    class Meta:
+        ordering = ['sort_order']
 
 
 class ChatLesson(Page, ClusterableModel):
@@ -111,7 +115,7 @@ class ChatLesson(Page, ClusterableModel):
         FieldPanel("difficulty_level"),
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
-        InlinePanel("key_concepts", label="Key Concepts"),
+        InlinePanel("key_concepts", label="Key Concepts", max_num=5,),
         FieldPanel('minigames'),
     ]
 
@@ -122,7 +126,7 @@ class ChatLesson(Page, ClusterableModel):
 
     def get_context(self, request: HttpRequest) -> dict:
         context = super().get_context(request)
-        context["key_concepts"] = self.key_concepts.all()
+        context["key_concepts"] = self.key_concepts.all().order_by('sort_order')
         context["max_message_length"] = MAX_USER_MESSAGE_LENGTH
         context["transcript"] = self.get_or_create_transcript(request)
 
