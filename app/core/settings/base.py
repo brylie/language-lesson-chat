@@ -35,7 +35,10 @@ if not SECRET_KEY:
     # Generate a random secret key if one is not provided
     SECRET_KEY = get_random_secret_key()
 
+AUTH_USER_MODEL = 'accounts.User'
+
 INSTALLED_APPS = [
+    "accounts",
     "home",
     "lessons",
     "minigames",
