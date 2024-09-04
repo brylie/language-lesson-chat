@@ -23,7 +23,8 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS",
+                          "127.0.0.1,localhost").split(",")
 
 # Make sure to set the DJANGO_SECRET environment variable in production to a secure random value.
 # You can generate one using the following command:
@@ -37,6 +38,7 @@ if not SECRET_KEY:
 INSTALLED_APPS = [
     "home",
     "lessons",
+    "minigames",
     "search",
     "transcripts",
     "wagtail.contrib.forms",
@@ -166,7 +168,7 @@ if USE_SPACES:
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
     STATIC_URL = f"https://{AWS_S3_ENDPOINT_URL}/static/"
-    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{ AWS_STORAGE_BUCKET_NAME}/media/"
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/"
 
     STORAGES = {
         "default": {

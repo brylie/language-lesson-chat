@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Task Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1c1c1c;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            max-height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import JobTaskGame from './job_task_game.js';
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            scene: JobTaskGame,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                parent: 'game-container'
+            }
+        };
+
+        const game = new Phaser.Game(config);
+
+        // Example task data (you can replace this with actual data)
+        const taskData = {
+            name: "Make an Espresso",
+            description: "Create a perfect shot of espresso",
+            image: "assets/espresso.webp",
+            steps: [
+                { name: "Grind the beans", image: "assets/grind_beans.webp", order: 1 },
+                { name: "Tamp the grounds", image: "assets/tamp_grounds.webp", order: 2 },
+                { name: "Pull the shot", image: "assets/pull_shot.webp", order: 3 },
+            ]
+        };
+
+        game.scene.start('JobTaskGame', { taskData: taskData });
+    </script>
+</body>
+</html>

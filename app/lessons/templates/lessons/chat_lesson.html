@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags static%}
+{% load wagtailcore_tags wagtailimages_tags static %}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -49,9 +49,18 @@
                 </div>
             {% endif %}
 
-            <div id="chat-interface-container">
+            <div id="chat-interface-container" class="mb-4">
                 {% include "lessons/chat_interface.html" %}
             </div>
+
+            <!-- Step Order Game integration -->
+            {% for block in page.minigames %}
+                {% if block.block_type == 'step_order_game' %}
+                    <div class="mb-4">
+                        {% include_block block %}
+                    </div>
+                {% endif %}
+            {% endfor %}
         </div>
 
         <!-- Sidebar -->
@@ -66,12 +75,15 @@
 {% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/lesson.css' %}">
+<!-- Add any additional CSS for the Step Order Game if needed -->
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
 <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const chatForm = document.getElementById('chat-form');
