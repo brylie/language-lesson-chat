@@ -41,35 +41,50 @@ export default class StepOrderGame extends Phaser.Scene {
   }
 
   create() {
+    this.cameras.main.setBackgroundColor('#2C3E50');
+    this.createLayout();
+
+    // Listen for game resize events
+    this.scale.on('resize', this.resize, this);
+  }
+
+  createLayout() {
     const { width, height } = this.scale;
 
-    this.cameras.main.setBackgroundColor('#2C3E50');
-
     // Header row
-    const headerHeight = height * HEADER_HEIGHT_RATIO;
+    const headerHeight = height * 0.25;
     this.createHeader(width, headerHeight);
 
     // Steps row
-    const stepsHeight = height * STEPS_HEIGHT_RATIO;
+    const stepsHeight = height * 0.65;
     this.createSteps(width, headerHeight, stepsHeight);
 
     // Footer row
-    const footerHeight = height * FOOTER_HEIGHT_RATIO;
+    const footerHeight = height * 0.1;
     this.createFooter(width, height - footerHeight, footerHeight);
   }
 
+  resize(gameSize) {
+    // Destroy existing layout
+    this.children.removeAll(true);
+    this.stepElements = [];
+
+    // Recreate layout with new dimensions
+    this.createLayout();
+  }
+
   createHeader(width, height) {
-    const padding = 20;
+    const padding = Math.min(20, width * 0.05);
 
     const titleText = this.add.text(padding, padding, this.config.title, {
-      fontSize: '32px',
+      fontSize: `${Math.max(16, width * 0.04)}px`,
       fontFamily: 'Arial',
       color: '#ECF0F1',
       fontWeight: 'bold'
     });
 
     const descriptionText = this.add.text(padding, titleText.y + titleText.height + 10, this.config.description, {
-      fontSize: '18px',
+      fontSize: `${Math.max(12, width * 0.02)}px`,
       fontFamily: 'Arial',
       color: '#BDC3C7',
       wordWrap: { width: width * 0.6 }
@@ -84,10 +99,10 @@ export default class StepOrderGame extends Phaser.Scene {
   }
 
   createSteps(width, startY, height) {
-    const padding = 20;
+    const padding = Math.min(20, width * 0.05);
     const stepWidth = width - padding * 2;
-    const stepHeight = 70;
-    const spacing = 10;
+    const stepHeight = Math.min(70, height * 0.2);
+    const spacing = Math.min(10, height * 0.02);
 
     const shuffledSteps = Phaser.Utils.Array.Shuffle(this.config.steps.slice());
 
@@ -172,7 +187,7 @@ export default class StepOrderGame extends Phaser.Scene {
   }
 
   createFooter(width, y, height) {
-    this.createCheckButton(width / 2, y + height / 2);
+    this.createCheckButton(width / 2, y + height / 2, width, height);
   }
 
   moveStepUp(stepElement) {
@@ -219,14 +234,14 @@ export default class StepOrderGame extends Phaser.Scene {
     });
   }
 
-  createCheckButton(x, y) {
-    const buttonWidth = 180;
-    const buttonHeight = 50;
+  createCheckButton(x, y, width, height) {
+    const buttonWidth = Math.min(180, width * 0.4);
+    const buttonHeight = Math.min(50, height * 0.6);
 
     const button = this.add.container(x, y);
     const bg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x27AE60, 1).setOrigin(0.5);
     const text = this.add.text(0, 0, 'Check Order', {
-      fontSize: '20px',
+      fontSize: `${Math.max(14, width * 0.03)}px`,
       fontFamily: 'Arial',
       color: '#ECF0F1'
     }).setOrigin(0.5);

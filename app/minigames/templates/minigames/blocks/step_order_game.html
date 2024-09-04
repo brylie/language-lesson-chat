@@ -42,12 +42,21 @@
         const config = {
             type: Phaser.AUTO,
             parent: 'step-order-game-container-{{ id }}',
-            width: 800,
-            height: 600,
-            scene: [new StepOrderGame(gameConfig)]  // Pass the gameConfig to the scene
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 800,
+                height: 600
+            },
+            scene: [new StepOrderGame(gameConfig)]
         };
 
         const game = new Phaser.Game(config);
         console.log('Phaser game instance created');
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            game.scale.refresh();
+        });
     });
 </script>
