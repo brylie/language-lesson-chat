@@ -18,13 +18,22 @@ export default class StepOrderGame extends Phaser.Scene {
       return;
     }
 
-    this.load.image('mainImage', this.config.main_image.url);
+    // Load main image
+    this.load.image({
+      key: 'mainImage',
+      url: this.config.main_image.url,
+      extension: undefined
+    });
 
+    // Load step images
     this.config.steps.forEach((step, index) => {
-      console.log(`Processing step ${index}: `, step);
       if (step && typeof step === 'object' && step.image && step.image.url) {
         console.log(`Loading image for step ${index}: `, step.image.url);
-        this.load.image(`step_${index} `, step.image.url);
+        this.load.image({
+          key: step.image.url,
+          url: step.image.url,
+          extension: undefined
+        });
       } else {
         console.warn(`Invalid step or missing image at index ${index}: `, step);
       }
@@ -97,7 +106,7 @@ export default class StepOrderGame extends Phaser.Scene {
     const bg = this.add.rectangle(0, 0, width, height, 0x34495E, 1).setOrigin(0.5);
     bg.setStrokeStyle(2, 0x2980B9);
 
-    const image = this.add.image(-width / 2 + height / 2, 0, `step_${step.order} `).setOrigin(0.5);
+    const image = this.add.image(-width / 2 + height / 2, 0, step.image.url).setOrigin(0.5);
     const scaleFactor = Math.min((height - 10) / image.height, (height - 10) / image.width);
     image.setScale(scaleFactor);
 
