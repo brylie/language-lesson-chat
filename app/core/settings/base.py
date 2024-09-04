@@ -36,6 +36,7 @@ if not SECRET_KEY:
     SECRET_KEY = get_random_secret_key()
 
 INSTALLED_APPS = [
+    "accounts",
     "home",
     "lessons",
     "minigames",
