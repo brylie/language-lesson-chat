@@ -1,6 +1,4 @@
 {% load static wagtailcore_tags wagtailuserbar %}
-{% load static wagtailcore_tags %}
-{% load wagtailimages_tags %}
 
 <!DOCTYPE html>
 
@@ -60,14 +58,7 @@
     </head>
     
     <body class="{% block body_class %}{% endblock %}">
-        <header>
-            {% with settings as branding_settings %}
-                {% if branding_settings.branding.BrandingSettings.logo %}
-                    {% image branding_settings.branding.BrandingSettings.logo original as logo_img %}
-                    <img src="{{ logo_img.url }}" alt="Company Logo">
-                {% endif %}
-            {% endwith %}
-        </header>
+        {% include "navbar.html" %}
         {% wagtailuserbar %}
         <div class="container">
             {% block content %}{% endblock %}

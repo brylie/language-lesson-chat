@@ -1,21 +1,14 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block body_class %}template-homepage{% endblock %}
 
 {% block extra_css %}
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
 {% endblock extra_css %}
 
 {% block content %}
+<h1>{% trans "Welcome to our language lesson chat!" %}</h1>
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
-
+<p>{% trans "Join our interactive platform to enhance your language skills through conversations and games." %}</p>
 {% endblock content %}
