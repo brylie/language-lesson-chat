@@ -31,7 +31,7 @@
                         width: {{ step_image.width }},
                         height: {{ step_image.height }}
                     },
-                    order: {{ step.order }}
+                    order: {{ forloop.counter }}
                 }{% if not forloop.last %},{% endif %}
                 {% endfor %}
             ]

@@ -5,8 +5,6 @@ from wagtail.images.blocks import ImageChooserBlock
 class StepBlock(blocks.StructBlock):
     name = blocks.CharBlock(required=True, help_text="Name of the step",)
     image = ImageChooserBlock(required=True, help_text="Image for the step",)
-    order = blocks.IntegerBlock(
-        required=True, help_text="Correct order of the step", min_value=1,)
 
 
 class StepOrderGameBlock(blocks.StructBlock):
