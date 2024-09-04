@@ -1,0 +1,62 @@
+{% load wagtailimages_tags static %}
+
+<div class="step-order-game" id="step-order-game-{{ id }}">
+    <h2>{{ value.title }}</h2>
+    <p>{{ value.description }}</p>
+
+    <div id="step-order-game-container-{{ id }}"></div>
+</div>
+
+<script type="module">
+    import StepOrderGame from "{% static 'js/step_order_game.js' %}";
+
+    {% image value.main_image width-800 as main_image %}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const gameConfig = {
+            title: "{{ value.title|escapejs }}",
+            description: "{{ value.description|escapejs }}",
+            main_image: {
+                url: "{{ main_image.url }}",
+                width: {{ main_image.width }},
+                height: {{ main_image.height }}
+            },
+            steps: [
+                {% for step in value.steps %}
+                {% image step.image width-400 as step_image %}
+                {
+                    name: "{{ step.name|escapejs }}",
+                    image: {
+                        url: "{{ step_image.url }}",
+                        width: {{ step_image.width }},
+                        height: {{ step_image.height }}
+                    },
+                    order: {{ forloop.counter }}
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        };
+
+        console.log('Game config:', JSON.parse(JSON.stringify(gameConfig)));
+
+        const config = {
+            type: Phaser.AUTO,
+            parent: 'step-order-game-container-{{ id }}',
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 800,
+                height: 600
+            },
+            scene: [new StepOrderGame(gameConfig)]
+        };
+
+        const game = new Phaser.Game(config);
+        console.log('Phaser game instance created');
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            game.scale.refresh();
+        });
+    });
+</script>

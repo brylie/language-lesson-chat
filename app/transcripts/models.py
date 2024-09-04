@@ -11,7 +11,7 @@ class Transcript(models.Model):
         related_name="transcripts",
     )
     lesson = models.ForeignKey(
-        "lessons.Lesson",
+        "lessons.ChatLesson",
         on_delete=models.CASCADE,
         related_name="transcripts",
     )

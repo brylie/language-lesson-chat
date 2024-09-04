@@ -23,7 +23,8 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS",
+                          "127.0.0.1,localhost").split(",")
 
 # Make sure to set the DJANGO_SECRET environment variable in production to a secure random value.
 # You can generate one using the following command:
@@ -34,10 +35,14 @@ if not SECRET_KEY:
     # Generate a random secret key if one is not provided
     SECRET_KEY = get_random_secret_key()
 
+AUTH_USER_MODEL = 'accounts.User'
+
 INSTALLED_APPS = [
+    "accounts",
     "branding",
     "home",
     "lessons",
+    "minigames",
     "search",
     "transcripts",
     "wagtail.contrib.forms",
@@ -168,31 +173,40 @@ if USE_SPACES:
     AWS_DEFAULT_ACL = "public-read"
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
-    AWS_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STATIC_URL = f"https://{AWS_S3_ENDPOINT_URL}/static/"
+    MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "core.storage_backends.MediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "core.storage_backends.StaticStorage",
+        },
+    }
+
+    # Prevent setting URL querystring parameters
+    # which are causing 403 errors on DigitalOcean Spaces
+    AWS_QUERYSTRING_AUTH = False
 else:
     STATIC_ROOT = os.path.join(BASE_DIR, "static")
     STATIC_URL = "/static/"
-
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = "/media/"
-
-# Default storage settings, with the staticfiles storage updated.
-# See https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-STORAGES
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    # ManifestStaticFilesStorage is recommended in production, to prevent
-    # outdated JavaScript / CSS assets being served from cache
-    # (e.g. after a Wagtail upgrade).
-    # See https://docs.djangoproject.com/en/5.1/ref/contrib/staticfiles/#manifeststaticfilesstorage
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
-    },
-}
-
+    # Default storage settings, with the staticfiles storage updated.
+    # See https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-STORAGES
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        # ManifestStaticFilesStorage is recommended in production, to prevent
+        # outdated JavaScript / CSS assets being served from cache
+        # (e.g. after a Wagtail upgrade).
+        # See https://docs.djangoproject.com/en/5.1/ref/contrib/staticfiles/#manifeststaticfilesstorage
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+        },
+    }
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+    MEDIA_URL = "/media/"
 
 # Wagtail settings
 WAGTAIL_SITE_NAME = "core"
