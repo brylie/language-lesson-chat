@@ -36,6 +36,7 @@ if not SECRET_KEY:
     SECRET_KEY = get_random_secret_key()
 
 AUTH_USER_MODEL = 'accounts.User'
+ACCOUNT_ACTIVATION_DAYS = 7  # One-week activation window
 
 INSTALLED_APPS = [
     "accounts",
@@ -67,6 +68,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_htmx",
     "storages",
+    "crispy_forms",
+    "crispy_bootstrap5",
 ]
 
 MIDDLEWARE = [
@@ -101,6 +104,10 @@ TEMPLATES = [
         },
     },
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 WSGI_APPLICATION = "core.wsgi.application"
 

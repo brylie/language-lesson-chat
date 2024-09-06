@@ -1,0 +1,10 @@
+Hello,
+
+You have registered for an account on {{ site.name }}. To activate your account, please click on the following link within the next {{ expiration_days }} days:
+
+{{ scheme }}://{{ site.domain }}{% url 'django_registration_activate' activation_key=activation_key %}
+
+If you didn't register for this account, you can safely ignore this email.
+
+Best regards,
+{{ site.name }} Team
