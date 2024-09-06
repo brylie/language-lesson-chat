@@ -1,0 +1,9 @@
+.iframe-container {
+    display: flex;
+    justify-content: center;
+}
+
+iframe {
+    width: 70vw;
+    height: calc(70vw * 0.5625);
+}
