@@ -1,5 +1,6 @@
 from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
+from django.utils.http import urlencode
 
 
 class StepBlock(blocks.StructBlock):
@@ -42,9 +43,9 @@ class IframeBlock(blocks.StructBlock):
         query_params = value['query_params']
 
         if query_params:
-            query_string = '&'.join(
-                [f"{param['key']}={param['value']}" for param in query_params])
-            url = f"{url}?{query_string}"
+            encoded_params = urlencode(
+                {param['key']: param['value'] for param in query_params})
+            url = f"{url}?{encoded_params}"
 
         context['iframe_url'] = url
         return context
