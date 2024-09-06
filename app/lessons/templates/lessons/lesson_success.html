@@ -49,7 +49,15 @@
                         </div>
                     {% endfor %}
                 </div>
-    </div>
+            </div>
+
+            {% for block in page.minigames %}
+                {% if block.block_type == 'step_order_game' %}
+                    <div class="mb-4">
+                        {% include_block block %}
+                    </div>
+                {% endif %}
+            {% endfor %}
 
             <div class="mt-5 mb-5">        
                 <h3>Want to practice more?</h3>
@@ -59,3 +67,7 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+{% endblock extra_js %}
