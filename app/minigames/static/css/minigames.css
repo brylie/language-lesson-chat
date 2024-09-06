@@ -4,6 +4,9 @@
 }
 
 iframe {
+    max-width: 100%;
     width: 70vw;
+    aspect-ratio: 16 / 9;
+    /* Fallback for browsers that don't support aspect-ratio */
     height: calc(70vw * 0.5625);
 }
