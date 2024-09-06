@@ -8,6 +8,33 @@
 {% endblock extra_css %}
 
 {% block content %}
+
+<div class="container">
+
+    <!-- The nav bar for the log in/out page-->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                {% if user.is_authenticated %}
+                    <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display:none;">
+                        {% csrf_token %}
+                        <button type="submit">Logout</button>
+                    </form>
+                    
+                    <a href="#" onclick="document.getElementById('logout-form').submit();">Logout</a>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'django_registration_register' %}">Sign Up</a>
+                    </li> 
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+
 <h1>{% trans "Welcome to our language lesson chat!" %}</h1>
 
 <p>{% trans "Join our interactive platform to enhance your language skills through conversations and games." %}</p>

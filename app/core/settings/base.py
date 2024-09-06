@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from django.core.management.utils import get_random_secret_key
 import dotenv
-
 import dj_database_url
 
 dotenv.load_dotenv()
@@ -66,7 +65,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_htmx",
-    "storages",
+    #"storages",
+    'django.contrib.sites',  
+    'registration',   
 ]
 
 MIDDLEWARE = [
@@ -80,6 +81,16 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
+
+
+SITE_ID = 1
+
+# Django Registration settings
+ACCOUNT_ACTIVATION_DAYS = 7  # Activation window (for two-step activation)
+REGISTRATION_AUTO_LOGIN = True  # Auto-login after registration
+LOGIN_REDIRECT_URL = '/'  # Redirect after login
+LOGOUT_REDIRECT_URL = '/'  # Redirect after logout
+
 
 ROOT_URLCONF = "core.urls"
 
@@ -119,6 +130,7 @@ else:
         "default": dj_database_url.config(
             conn_max_age=600,
             conn_health_checks=True,
+            default=os.getenv('DATABASE_URL')
         ),
     }
 
