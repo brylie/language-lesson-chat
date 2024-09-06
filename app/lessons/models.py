@@ -12,7 +12,7 @@ import logging
 from django_htmx.http import HttpResponseClientRedirect
 from django.contrib.auth import get_user_model
 
-from minigames.blocks import StepOrderGameBlock
+from minigames.blocks import IframeBlock, StepOrderGameBlock
 from .choices import CEFRLevel, VoiceChoice, LanguageChoice
 from transcripts.models import Transcript, TranscriptMessage
 
@@ -104,6 +104,7 @@ class ChatLesson(Page, ClusterableModel):
     )
     minigames = StreamField([
         ('step_order_game', StepOrderGameBlock()),
+        ('iframe', IframeBlock()),
     ], blank=True, use_json_field=True,)
 
     content_panels = Page.content_panels + [
