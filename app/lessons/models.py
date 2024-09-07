@@ -3,7 +3,7 @@ import logging
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django_htmx.http import HttpResponseClientRedirect
 from minigames.blocks import IframeBlock, StepOrderGameBlock
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 MAX_USER_MESSAGE_LENGTH = 100
 
 # Define the constant for responses without a key concept
-SUCCESS_PARAM = "success"
+CHAT_SUMMARY_PARAM = "chat_summary"
 START_OVER_PARAM = "start_over"
 
 User = get_user_model()
@@ -143,15 +143,8 @@ class ChatLesson(Page, ClusterableModel):
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
-        if request.method == "GET" and SUCCESS_PARAM in request.GET:
-            if self.user_has_responded_to_all_key_concepts(request):
-                self.reset_lesson_progress(request)
-                return self.render_success_page(request)
-            else:
-                # If the user has not completed the lesson, reset the progress
-                self.reset_lesson_progress(request)
-
-                return redirect(f"{request.path}")
+        if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
+            return self.render_summary_page(request)
 
         if request.method == "POST":
             if "start_over" in request.POST:
@@ -192,7 +185,7 @@ class ChatLesson(Page, ClusterableModel):
         return super().serve(request)
 
     def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
-        return HttpResponseClientRedirect(f"{self.url}?{SUCCESS_PARAM}=true")
+        return HttpResponseClientRedirect(f"{self.url}?{CHAT_SUMMARY_PARAM}=true")
 
     def render_success_if_complete_else_redirect_to_self(
         self, request: HttpRequest
@@ -202,7 +195,7 @@ class ChatLesson(Page, ClusterableModel):
         If the student has not responded to all key concepts, redirect back to the lesson page."""
         if self.user_has_responded_to_all_key_concepts(request):
             self.reset_lesson_progress(request)
-            return self.render_success_page(request)
+            return self.render_summary_page(request)
         else:
             # return HttpResponseClientRedirect(self.url)
             pass
@@ -259,7 +252,7 @@ class ChatLesson(Page, ClusterableModel):
 
         return transcript
 
-    def render_success_page(self, request: HttpRequest) -> HttpResponse:
+    def render_summary_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
 
         # Retrieve the current transcript
@@ -276,7 +269,7 @@ class ChatLesson(Page, ClusterableModel):
                 "no_key_concept": NO_KEY_CONCEPT,
             }
         )
-        return render(request, "lessons/lesson_success.html", context)
+        return render(request, "lessons/chat_summary.html", context)
 
     def update_responded_key_concepts(
         self,
