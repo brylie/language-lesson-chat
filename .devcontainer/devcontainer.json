@@ -21,9 +21,24 @@
 				"GitHub.copilot-chat"
 			],
 			"settings": {
-				"editor.defaultFormatter": "charliermarsh.ruff",
-				"ruff.formatOnSave": true,
-				"ruff.formatOnPaste": true
+				"python.linting.enabled": true,
+				"python.linting.lintOnSave": true,
+				"python.formatting.provider": "none",
+				"editor.formatOnSave": true,
+				"[python]": {
+					"editor.defaultFormatter": "charliermarsh.ruff",
+					"editor.formatOnSave": true,
+					"editor.codeActionsOnSave": {
+						"source.fixAll": "explicit",
+						"source.organizeImports": "explicit"
+					}
+				},
+				"ruff.lint.run": "onSave",
+				"ruff.format.args": [
+					"--line-length",
+					"100"
+				],
+				"ruff.organizeImports": true
 			}
 		}
 	},
