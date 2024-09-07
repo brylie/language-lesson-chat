@@ -139,12 +139,14 @@ class ChatLesson(Page, ClusterableModel):
         context["key_concepts"] = self.key_concepts.all().order_by("sort_order")
         context["max_message_length"] = MAX_USER_MESSAGE_LENGTH
         context["transcript"] = self.get_or_create_transcript(request)
+        context["start_over_param"] = START_OVER_PARAM
 
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
         if request.method == "GET" and START_OVER_PARAM in request.GET:
             self.reset_lesson_progress(request)
+            self.manage_transcript(request, create_new=True)
 
         if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
             return self.render_summary_page(request)

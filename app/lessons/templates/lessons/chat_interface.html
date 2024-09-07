@@ -21,9 +21,5 @@
         {% include "lessons/suggested_responses.html" %}
     </div>
 
-    <button id="start-over-btn" class="btn btn-sm btn-outline-secondary mt-2"
-        hx-post="{{ page.url }}"
-        hx-vals='js:{"start_over": "true", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
-        hx-target="body"
-        hx-swap="beforeend">Start Over</button>
+    <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-outlineprimary btn-lg">Start Again</a>
 </section>
