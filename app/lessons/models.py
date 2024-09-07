@@ -1,21 +1,20 @@
+import logging
+
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
-from wagtail.models import Page
-from wagtail.fields import RichTextField, StreamField
-from wagtail.admin.panels import FieldPanel, InlinePanel
-from wagtail.models import Orderable
+from django_htmx.http import HttpResponseClientRedirect
+from minigames.blocks import IframeBlock, StepOrderGameBlock
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-import logging
-from django_htmx.http import HttpResponseClientRedirect
-from django.contrib.auth import get_user_model
-
-from minigames.blocks import IframeBlock, StepOrderGameBlock
-from .choices import CEFRLevel, VoiceChoice, LanguageChoice
 from transcripts.models import Transcript, TranscriptMessage
+from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.fields import RichTextField, StreamField
+from wagtail.models import Orderable, Page
 
+from .choices import CEFRLevel, LanguageChoice, VoiceChoice
 from .llm import NO_KEY_CONCEPT, get_llm_response
 
 # Set up logging
@@ -33,7 +32,9 @@ User = get_user_model()
 
 class KeyConcept(Orderable):
     lesson = ParentalKey(
-        "ChatLesson", related_name="key_concepts", on_delete=models.CASCADE,
+        "ChatLesson",
+        related_name="key_concepts",
+        on_delete=models.CASCADE,
     )
     concept = models.CharField(
         max_length=255,
@@ -57,7 +58,7 @@ class KeyConcept(Orderable):
         return self.concept
 
     class Meta:
-        ordering = ['sort_order']
+        ordering = ["sort_order"]
 
 
 class ChatLesson(Page, ClusterableModel):
@@ -102,10 +103,14 @@ class ChatLesson(Page, ClusterableModel):
         verbose_name="LLM System Prompt",
         help_text="Provide specific instructions for the AI assistant's behavior in this lesson. For example, 'You are a friendly barista in a busy coffee shop. Engage the student in small talk and help them order a drink.'",
     )
-    minigames = StreamField([
-        ('step_order_game', StepOrderGameBlock()),
-        ('iframe', IframeBlock()),
-    ], blank=True, use_json_field=True,)
+    minigames = StreamField(
+        [
+            ("step_order_game", StepOrderGameBlock()),
+            ("iframe", IframeBlock()),
+        ],
+        blank=True,
+        use_json_field=True,
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("intro"),
@@ -116,8 +121,12 @@ class ChatLesson(Page, ClusterableModel):
         FieldPanel("difficulty_level"),
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
-        InlinePanel("key_concepts", label="Key Concepts", max_num=5,),
-        FieldPanel('minigames'),
+        InlinePanel(
+            "key_concepts",
+            label="Key Concepts",
+            max_num=5,
+        ),
+        FieldPanel("minigames"),
     ]
 
     class Meta:
@@ -127,7 +136,7 @@ class ChatLesson(Page, ClusterableModel):
 
     def get_context(self, request: HttpRequest) -> dict:
         context = super().get_context(request)
-        context["key_concepts"] = self.key_concepts.all().order_by('sort_order')
+        context["key_concepts"] = self.key_concepts.all().order_by("sort_order")
         context["max_message_length"] = MAX_USER_MESSAGE_LENGTH
         context["transcript"] = self.get_or_create_transcript(request)
 
@@ -174,8 +183,7 @@ class ChatLesson(Page, ClusterableModel):
 
             llm_response = self.get_llm_response(request, user_message)
 
-            lesson_is_complete = self.user_has_responded_to_all_key_concepts(
-                request)
+            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
             if lesson_is_complete:
                 return self.handle_lesson_completion(request)
 
@@ -219,9 +227,7 @@ class ChatLesson(Page, ClusterableModel):
                 "transcript_id": new_transcript.id,
             }
         )
-        reset_response = render_to_string(
-            "lessons/combined_htmx_response.html", context
-        )
+        reset_response = render_to_string("lessons/combined_htmx_response.html", context)
         return HttpResponse(reset_response)
 
     def reset_lesson_progress(self, request: HttpRequest):
@@ -240,8 +246,7 @@ class ChatLesson(Page, ClusterableModel):
                 del request.session["transcript_id"]
 
             # Create a new transcript
-            transcript = Transcript.objects.create(
-                user=request.user, lesson=self)
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
             request.session["transcript_id"] = transcript.id
         else:
             transcript_id = request.session.get("transcript_id")
@@ -249,8 +254,7 @@ class ChatLesson(Page, ClusterableModel):
                 transcript = Transcript.objects.get(id=transcript_id)
             except Transcript.DoesNotExist:
                 # If the transcript doesn't exist, create a new one
-                transcript = Transcript.objects.create(
-                    user=request.user, lesson=self)
+                transcript = Transcript.objects.create(user=request.user, lesson=self)
                 request.session["transcript_id"] = transcript.id
 
         return transcript
@@ -282,8 +286,7 @@ class ChatLesson(Page, ClusterableModel):
         """
         Update the list of key concepts that the user has responded to.
         """
-        responded_key_concepts = request.session.get(
-            "responded_key_concepts", [])
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
         if (
             response_key_concept
             and response_key_concept != NO_KEY_CONCEPT
@@ -296,10 +299,8 @@ class ChatLesson(Page, ClusterableModel):
         """
         Check if the user has responded to all key concepts in the lesson.
         """
-        lesson_key_concepts = [
-            concept.concept for concept in self.key_concepts.all()]
-        responded_key_concepts = request.session.get(
-            "responded_key_concepts", [])
+        lesson_key_concepts = [concept.concept for concept in self.key_concepts.all()]
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
         return set(lesson_key_concepts) == set(responded_key_concepts)
 
     def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
@@ -318,17 +319,14 @@ class ChatLesson(Page, ClusterableModel):
 
     def get_or_create_transcript(self, request: HttpRequest) -> Transcript:
         if "transcript_id" not in request.session:
-            transcript = Transcript.objects.create(
-                user=request.user, lesson=self)
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
         else:
             transcript_id = request.session.get("transcript_id")
             if transcript_id:
                 try:
                     transcript = Transcript.objects.get(id=transcript_id)
                 except Transcript.DoesNotExist:
-                    transcript = Transcript.objects.create(
-                        user=request.user, lesson=self
-                    )
+                    transcript = Transcript.objects.create(user=request.user, lesson=self)
         request.session["transcript_id"] = transcript.id
         return transcript
 
