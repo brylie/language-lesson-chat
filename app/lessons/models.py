@@ -1,21 +1,19 @@
+import logging
+
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
-from wagtail.models import Page
-from wagtail.fields import RichTextField, StreamField
-from wagtail.admin.panels import FieldPanel, InlinePanel
-from wagtail.models import Orderable
+from django.shortcuts import render
+from django_htmx.http import HttpResponseClientRedirect
+from minigames.blocks import IframeBlock, StepOrderGameBlock
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-import logging
-from django_htmx.http import HttpResponseClientRedirect
-from django.contrib.auth import get_user_model
-
-from minigames.blocks import IframeBlock, StepOrderGameBlock
-from .choices import CEFRLevel, VoiceChoice, LanguageChoice
 from transcripts.models import Transcript, TranscriptMessage
+from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.fields import RichTextField, StreamField
+from wagtail.models import Orderable, Page
 
+from .choices import CEFRLevel, LanguageChoice, VoiceChoice
 from .llm import NO_KEY_CONCEPT, get_llm_response
 
 # Set up logging
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 MAX_USER_MESSAGE_LENGTH = 100
 
 # Define the constant for responses without a key concept
-SUCCESS_PARAM = "success"
+CHAT_SUMMARY_PARAM = "chat_summary"
 START_OVER_PARAM = "start_over"
 
 User = get_user_model()
@@ -33,7 +31,9 @@ User = get_user_model()
 
 class KeyConcept(Orderable):
     lesson = ParentalKey(
-        "ChatLesson", related_name="key_concepts", on_delete=models.CASCADE,
+        "ChatLesson",
+        related_name="key_concepts",
+        on_delete=models.CASCADE,
     )
     concept = models.CharField(
         max_length=255,
@@ -57,7 +57,7 @@ class KeyConcept(Orderable):
         return self.concept
 
     class Meta:
-        ordering = ['sort_order']
+        ordering = ["sort_order"]
 
 
 class ChatLesson(Page, ClusterableModel):
@@ -102,10 +102,14 @@ class ChatLesson(Page, ClusterableModel):
         verbose_name="LLM System Prompt",
         help_text="Provide specific instructions for the AI assistant's behavior in this lesson. For example, 'You are a friendly barista in a busy coffee shop. Engage the student in small talk and help them order a drink.'",
     )
-    minigames = StreamField([
-        ('step_order_game', StepOrderGameBlock()),
-        ('iframe', IframeBlock()),
-    ], blank=True, use_json_field=True,)
+    minigames = StreamField(
+        [
+            ("step_order_game", StepOrderGameBlock()),
+            ("iframe", IframeBlock()),
+        ],
+        blank=True,
+        use_json_field=True,
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("intro"),
@@ -116,8 +120,12 @@ class ChatLesson(Page, ClusterableModel):
         FieldPanel("difficulty_level"),
         FieldPanel("estimated_time"),
         FieldPanel("llm_system_prompt"),
-        InlinePanel("key_concepts", label="Key Concepts", max_num=5,),
-        FieldPanel('minigames'),
+        InlinePanel(
+            "key_concepts",
+            label="Key Concepts",
+            max_num=5,
+        ),
+        FieldPanel("minigames"),
     ]
 
     class Meta:
@@ -127,84 +135,73 @@ class ChatLesson(Page, ClusterableModel):
 
     def get_context(self, request: HttpRequest) -> dict:
         context = super().get_context(request)
-        context["key_concepts"] = self.key_concepts.all().order_by('sort_order')
+        context["key_concepts"] = self.key_concepts.all().order_by("sort_order")
         context["max_message_length"] = MAX_USER_MESSAGE_LENGTH
         context["transcript"] = self.get_or_create_transcript(request)
+        context["start_over_param"] = START_OVER_PARAM
 
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
-        if request.method == "GET" and SUCCESS_PARAM in request.GET:
-            if self.user_has_responded_to_all_key_concepts(request):
-                self.reset_lesson_progress(request)
-                return self.render_success_page(request)
-            else:
-                # If the user has not completed the lesson, reset the progress
-                self.reset_lesson_progress(request)
+        if request.method == "GET" and START_OVER_PARAM in request.GET:
+            return self.handle_start_over(request)
 
-                return redirect(f"{request.path}")
+        if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
+            return self.render_summary_page(request)
 
         if request.method == "POST":
-            if "start_over" in request.POST:
-                return self.handle_start_over(request)
-
-            user_message = request.POST.get("user_message", "")
-            response_key_concept = request.POST.get("response_key_concept", "")
-
-            # Server-side validation of message length
-            if len(user_message) > MAX_USER_MESSAGE_LENGTH:
-                return JsonResponse(
-                    {
-                        "status": "error",
-                        "message": f"Message exceeds maximum length of {MAX_USER_MESSAGE_LENGTH} characters.",
-                    },
-                    status=400,
-                )
-
-            # Update responded key concepts
-            self.update_responded_key_concepts(request, response_key_concept)
-
-            # Log user message
-            self.log_message(
-                request,
-                "user",
-                user_message,
-                response_key_concept,
-            )
-
-            llm_response = self.get_llm_response(request, user_message)
-
-            lesson_is_complete = self.user_has_responded_to_all_key_concepts(
-                request)
-            if lesson_is_complete:
-                return self.handle_lesson_completion(request)
-
-            return HttpResponse(llm_response)
+            return self.handle_chat_message(request)
 
         return super().serve(request)
 
+    def handle_chat_message(self, request: HttpRequest) -> HttpResponse:
+        """
+        Handle the user's chat message and return the AI assistant's response.
+
+        If the user has responded to all key concepts, the lesson is considered complete."""
+        user_message = request.POST.get("user_message", "")
+        response_key_concept = request.POST.get("response_key_concept", "")
+
+        # Validate the message length to prevent abuse
+        if len(user_message) > MAX_USER_MESSAGE_LENGTH:
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": f"Message exceeds maximum length of {MAX_USER_MESSAGE_LENGTH} characters.",
+                },
+                status=400,
+            )
+
+        # Update responded key concepts
+        self.update_responded_key_concepts(request, response_key_concept)
+
+        # Log user message
+        self.log_message(
+            request,
+            "user",
+            user_message,
+            response_key_concept,
+        )
+
+        # Check if the lesson is complete
+        lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+        if lesson_is_complete:
+            return self.handle_lesson_completion(request)
+
+        # If lesson is not complete, get the LLM response
+        llm_response = self.get_llm_response(request, user_message)
+
+        return HttpResponse(llm_response)
+
     def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
-        return HttpResponseClientRedirect(f"{self.url}?{SUCCESS_PARAM}=true")
-
-    def render_success_if_complete_else_redirect_to_self(
-        self, request: HttpRequest
-    ) -> HttpResponse:
-        """Ensure the student has responded to all key concepts before rendering the success page.
-
-        If the student has not responded to all key concepts, redirect back to the lesson page."""
-        if self.user_has_responded_to_all_key_concepts(request):
-            self.reset_lesson_progress(request)
-            return self.render_success_page(request)
-        else:
-            # return HttpResponseClientRedirect(self.url)
-            pass
+        return HttpResponseClientRedirect(f"{self.url}?{CHAT_SUMMARY_PARAM}=true")
 
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
         # Reset lesson progress
         self.reset_lesson_progress(request)
 
         # Create a new transcript
-        new_transcript = self.manage_transcript(request, create_new=True)
+        new_transcript = self.get_or_create_transcript(request, force_create_new=True)
 
         context = self.get_context(request)
         context.update(
@@ -219,47 +216,19 @@ class ChatLesson(Page, ClusterableModel):
                 "transcript_id": new_transcript.id,
             }
         )
-        reset_response = render_to_string(
-            "lessons/combined_htmx_response.html", context
-        )
-        return HttpResponse(reset_response)
+
+        return render(request, "lessons/chat_lesson.html", context)
 
     def reset_lesson_progress(self, request: HttpRequest):
         request.session["conversation_history"] = []
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
 
-    def manage_transcript(
-        self,
-        request: HttpRequest,
-        create_new: bool = False,
-    ) -> Transcript:
-        if create_new or "transcript_id" not in request.session:
-            # Clear existing transcript ID if present
-            if "transcript_id" in request.session:
-                del request.session["transcript_id"]
-
-            # Create a new transcript
-            transcript = Transcript.objects.create(
-                user=request.user, lesson=self)
-            request.session["transcript_id"] = transcript.id
-        else:
-            transcript_id = request.session.get("transcript_id")
-            try:
-                transcript = Transcript.objects.get(id=transcript_id)
-            except Transcript.DoesNotExist:
-                # If the transcript doesn't exist, create a new one
-                transcript = Transcript.objects.create(
-                    user=request.user, lesson=self)
-                request.session["transcript_id"] = transcript.id
-
-        return transcript
-
-    def render_success_page(self, request: HttpRequest) -> HttpResponse:
+    def render_summary_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
 
         # Retrieve the current transcript
-        transcript = self.manage_transcript(request)
+        transcript = self.get_or_create_transcript(request)
         context["transcript"] = transcript
 
         # Clear the transcript ID from the session to ensure a new one is created next time
@@ -270,9 +239,10 @@ class ChatLesson(Page, ClusterableModel):
             {
                 "key_concepts": self.key_concepts.all(),
                 "no_key_concept": NO_KEY_CONCEPT,
+                "start_over_param": START_OVER_PARAM,
             }
         )
-        return render(request, "lessons/lesson_success.html", context)
+        return render(request, "lessons/chat_summary.html", context)
 
     def update_responded_key_concepts(
         self,
@@ -282,8 +252,7 @@ class ChatLesson(Page, ClusterableModel):
         """
         Update the list of key concepts that the user has responded to.
         """
-        responded_key_concepts = request.session.get(
-            "responded_key_concepts", [])
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
         if (
             response_key_concept
             and response_key_concept != NO_KEY_CONCEPT
@@ -296,10 +265,8 @@ class ChatLesson(Page, ClusterableModel):
         """
         Check if the user has responded to all key concepts in the lesson.
         """
-        lesson_key_concepts = [
-            concept.concept for concept in self.key_concepts.all()]
-        responded_key_concepts = request.session.get(
-            "responded_key_concepts", [])
+        lesson_key_concepts = [concept.concept for concept in self.key_concepts.all()]
+        responded_key_concepts = request.session.get("responded_key_concepts", [])
         return set(lesson_key_concepts) == set(responded_key_concepts)
 
     def get_llm_response(self, request: HttpRequest, user_message: str) -> HttpResponse:
@@ -316,23 +283,26 @@ class ChatLesson(Page, ClusterableModel):
                 llm_model=llm_model if role == "assistant" else None,
             )
 
-    def get_or_create_transcript(self, request: HttpRequest) -> Transcript:
-        if "transcript_id" not in request.session:
-            transcript = Transcript.objects.create(
-                user=request.user, lesson=self)
+    def get_or_create_transcript(
+        self,
+        request: HttpRequest,
+        force_create_new: bool = False,
+    ) -> Transcript:
+        if force_create_new or "transcript_id" not in request.session:
+            # Clear existing transcript ID if present
+            if "transcript_id" in request.session:
+                del request.session["transcript_id"]
+
+            # Create a new transcript
+            transcript = Transcript.objects.create(user=request.user, lesson=self)
+            request.session["transcript_id"] = transcript.id
         else:
             transcript_id = request.session.get("transcript_id")
-            if transcript_id:
-                try:
-                    transcript = Transcript.objects.get(id=transcript_id)
-                except Transcript.DoesNotExist:
-                    transcript = Transcript.objects.create(
-                        user=request.user, lesson=self
-                    )
-        request.session["transcript_id"] = transcript.id
-        return transcript
+            try:
+                transcript = Transcript.objects.get(id=transcript_id)
+            except Transcript.DoesNotExist:
+                # If the transcript doesn't exist, create a new one
+                transcript = Transcript.objects.create(user=request.user, lesson=self)
+                request.session["transcript_id"] = transcript.id
 
-    class Meta:
-        verbose_name = "Language Lesson"
-        verbose_name_plural = "Language Lessons"
-        db_table = "lessons"
+        return transcript

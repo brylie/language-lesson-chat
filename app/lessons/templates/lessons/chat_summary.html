@@ -7,20 +7,20 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-4">Congratulations!</h1>
-            <p class="lead">You've successfully completed the lesson: <strong>{{ page.title }}</strong></p>
+            <h1 class="mb-4">Summary</h1>
+            <p class="lead">Chat summary for: <strong>{{ page.title }}</strong></p>
             
-            <h2 class="mt-5 mb-3">Key Concepts Covered</h2>
+            <h2 class="mt-5 mb-3">Key Concepts</h2>
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 {% for concept in key_concepts %}
                     <div class="col">
-                        <div class="card h-100 bg-success">
+                        <div class="card h-100">
                             {% if concept.image %}
                                 {% image concept.image width-1024 as concept_image %}
                                 <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
                             {% endif %}
                             <div class="card-body">
-                                <p class="card-text mb-0 text-center text-light">
+                                <p class="card-text mb-0 text-center">
                                     {{ concept.concept }}
                                 </p>
                             </div>
@@ -29,7 +29,8 @@
                 {% endfor %}
             </div>
 
-            <h2 class="mt-5 mb-3">Lesson Transcript</h2>
+            {% if transcript.messages.all %}
+            <h2 class="mt-5 mb-3">Chat Transcript</h2>
             <div class="card">
                 <div class="card-body">
                     {% for message in transcript.messages.all %}
@@ -50,12 +51,20 @@
                     {% endfor %}
                 </div>
             </div>
+            {% else %}
+            <div class="alert alert-info mt-5" role="alert">
+                No chat transcript available.
+            </div>
+            <a href="{{ page.url }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-chat-dots-fill"></i> Chat Now
+            </a>
+            {% endif %}
 
             {% include "minigames/minigames.html" with minigames=page.minigames %}
 
             <div class="mt-5 mb-5">        
                 <h3>Want to practice more?</h3>
-                <a href="{{ page.url }}" class="btn btn-primary btn-lg">Practice Again</a>
+                <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary btn-lg">Practice Again</a>
             </div>
         </div>
     </div>
