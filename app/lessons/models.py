@@ -144,7 +144,7 @@ class ChatLesson(Page, ClusterableModel):
 
     def serve(self, request: HttpRequest) -> HttpResponse:
         if request.method == "GET" and START_OVER_PARAM in request.GET:
-            self.handle_start_over(request)
+            return self.handle_start_over(request)
 
         if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
             return self.render_summary_page(request)
@@ -201,7 +201,7 @@ class ChatLesson(Page, ClusterableModel):
         self.reset_lesson_progress(request)
 
         # Create a new transcript
-        new_transcript = self.manage_transcript(request, create_new=True)
+        new_transcript = self.get_or_create_transcript(request, force_create_new=True)
 
         context = self.get_context(request)
         context.update(
@@ -217,40 +217,18 @@ class ChatLesson(Page, ClusterableModel):
             }
         )
 
+        return render(request, "lessons/chat_lesson.html", context)
+
     def reset_lesson_progress(self, request: HttpRequest):
         request.session["conversation_history"] = []
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
 
-    def manage_transcript(
-        self,
-        request: HttpRequest,
-        create_new: bool = False,
-    ) -> Transcript:
-        if create_new or "transcript_id" not in request.session:
-            # Clear existing transcript ID if present
-            if "transcript_id" in request.session:
-                del request.session["transcript_id"]
-
-            # Create a new transcript
-            transcript = Transcript.objects.create(user=request.user, lesson=self)
-            request.session["transcript_id"] = transcript.id
-        else:
-            transcript_id = request.session.get("transcript_id")
-            try:
-                transcript = Transcript.objects.get(id=transcript_id)
-            except Transcript.DoesNotExist:
-                # If the transcript doesn't exist, create a new one
-                transcript = Transcript.objects.create(user=request.user, lesson=self)
-                request.session["transcript_id"] = transcript.id
-
-        return transcript
-
     def render_summary_page(self, request: HttpRequest) -> HttpResponse:
         context = self.get_context(request)
 
         # Retrieve the current transcript
-        transcript = self.manage_transcript(request)
+        transcript = self.get_or_create_transcript(request)
         context["transcript"] = transcript
 
         # Clear the transcript ID from the session to ensure a new one is created next time
@@ -305,16 +283,26 @@ class ChatLesson(Page, ClusterableModel):
                 llm_model=llm_model if role == "assistant" else None,
             )
 
-    def get_or_create_transcript(self, request: HttpRequest) -> Transcript:
-        if "transcript_id" not in request.session:
+    def get_or_create_transcript(
+        self,
+        request: HttpRequest,
+        force_create_new: bool = False,
+    ) -> Transcript:
+        if force_create_new or "transcript_id" not in request.session:
+            # Clear existing transcript ID if present
+            if "transcript_id" in request.session:
+                del request.session["transcript_id"]
+
+            # Create a new transcript
             transcript = Transcript.objects.create(user=request.user, lesson=self)
+            request.session["transcript_id"] = transcript.id
         else:
             transcript_id = request.session.get("transcript_id")
             try:
                 transcript = Transcript.objects.get(id=transcript_id)
             except Transcript.DoesNotExist:
+                # If the transcript doesn't exist, create a new one
                 transcript = Transcript.objects.create(user=request.user, lesson=self)
-
-        request.session["transcript_id"] = transcript.id
+                request.session["transcript_id"] = transcript.id
 
         return transcript
