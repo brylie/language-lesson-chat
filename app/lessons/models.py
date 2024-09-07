@@ -322,8 +322,3 @@ class ChatLesson(Page, ClusterableModel):
                     transcript = Transcript.objects.create(user=request.user, lesson=self)
         request.session["transcript_id"] = transcript.id
         return transcript
-
-    class Meta:
-        verbose_name = "Language Lesson"
-        verbose_name_plural = "Language Lessons"
-        db_table = "lessons"
