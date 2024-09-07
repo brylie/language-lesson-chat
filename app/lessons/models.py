@@ -174,11 +174,13 @@ class ChatLesson(Page, ClusterableModel):
                 response_key_concept,
             )
 
-            llm_response = self.get_llm_response(request, user_message)
-
+            # Check if the lesson is complete
             lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
             if lesson_is_complete:
                 return self.handle_lesson_completion(request)
+
+            # If lesson is not complete, get the LLM response
+            llm_response = self.get_llm_response(request, user_message)
 
             return HttpResponse(llm_response)
 
@@ -186,19 +188,6 @@ class ChatLesson(Page, ClusterableModel):
 
     def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
         return HttpResponseClientRedirect(f"{self.url}?{CHAT_SUMMARY_PARAM}=true")
-
-    def render_success_if_complete_else_redirect_to_self(
-        self, request: HttpRequest
-    ) -> HttpResponse:
-        """Ensure the student has responded to all key concepts before rendering the success page.
-
-        If the student has not responded to all key concepts, redirect back to the lesson page."""
-        if self.user_has_responded_to_all_key_concepts(request):
-            self.reset_lesson_progress(request)
-            return self.render_summary_page(request)
-        else:
-            # return HttpResponseClientRedirect(self.url)
-            pass
 
     def handle_start_over(self, request: HttpRequest) -> HttpResponse:
         # Reset lesson progress
