@@ -143,6 +143,9 @@ class ChatLesson(Page, ClusterableModel):
         return context
 
     def serve(self, request: HttpRequest) -> HttpResponse:
+        if request.method == "GET" and START_OVER_PARAM in request.GET:
+            self.reset_lesson_progress(request)
+
         if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
             return self.render_summary_page(request)
 
@@ -263,6 +266,7 @@ class ChatLesson(Page, ClusterableModel):
             {
                 "key_concepts": self.key_concepts.all(),
                 "no_key_concept": NO_KEY_CONCEPT,
+                "start_over_param": START_OVER_PARAM,
             }
         )
         return render(request, "lessons/chat_summary.html", context)
