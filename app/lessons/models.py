@@ -150,41 +150,48 @@ class ChatLesson(Page, ClusterableModel):
             if "start_over" in request.POST:
                 return self.handle_start_over(request)
 
-            user_message = request.POST.get("user_message", "")
-            response_key_concept = request.POST.get("response_key_concept", "")
-
-            # Server-side validation of message length
-            if len(user_message) > MAX_USER_MESSAGE_LENGTH:
-                return JsonResponse(
-                    {
-                        "status": "error",
-                        "message": f"Message exceeds maximum length of {MAX_USER_MESSAGE_LENGTH} characters.",
-                    },
-                    status=400,
-                )
-
-            # Update responded key concepts
-            self.update_responded_key_concepts(request, response_key_concept)
-
-            # Log user message
-            self.log_message(
-                request,
-                "user",
-                user_message,
-                response_key_concept,
-            )
-
-            # Check if the lesson is complete
-            lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
-            if lesson_is_complete:
-                return self.handle_lesson_completion(request)
-
-            # If lesson is not complete, get the LLM response
-            llm_response = self.get_llm_response(request, user_message)
-
-            return HttpResponse(llm_response)
+            return self.handle_chat_message(request)
 
         return super().serve(request)
+
+    def handle_chat_message(self, request: HttpRequest) -> HttpResponse:
+        """
+        Handle the user's chat message and return the AI assistant's response.
+
+        If the user has responded to all key concepts, the lesson is considered complete."""
+        user_message = request.POST.get("user_message", "")
+        response_key_concept = request.POST.get("response_key_concept", "")
+
+        # Validate the message length to prevent abuse
+        if len(user_message) > MAX_USER_MESSAGE_LENGTH:
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": f"Message exceeds maximum length of {MAX_USER_MESSAGE_LENGTH} characters.",
+                },
+                status=400,
+            )
+
+        # Update responded key concepts
+        self.update_responded_key_concepts(request, response_key_concept)
+
+        # Log user message
+        self.log_message(
+            request,
+            "user",
+            user_message,
+            response_key_concept,
+        )
+
+        # Check if the lesson is complete
+        lesson_is_complete = self.user_has_responded_to_all_key_concepts(request)
+        if lesson_is_complete:
+            return self.handle_lesson_completion(request)
+
+        # If lesson is not complete, get the LLM response
+        llm_response = self.get_llm_response(request, user_message)
+
+        return HttpResponse(llm_response)
 
     def handle_lesson_completion(self, request: HttpRequest) -> HttpResponse:
         return HttpResponseClientRedirect(f"{self.url}?{CHAT_SUMMARY_PARAM}=true")
