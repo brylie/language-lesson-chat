@@ -315,10 +315,11 @@ class ChatLesson(Page, ClusterableModel):
             transcript = Transcript.objects.create(user=request.user, lesson=self)
         else:
             transcript_id = request.session.get("transcript_id")
-            if transcript_id:
-                try:
-                    transcript = Transcript.objects.get(id=transcript_id)
-                except Transcript.DoesNotExist:
-                    transcript = Transcript.objects.create(user=request.user, lesson=self)
+            try:
+                transcript = Transcript.objects.get(id=transcript_id)
+            except Transcript.DoesNotExist:
+                transcript = Transcript.objects.create(user=request.user, lesson=self)
+
         request.session["transcript_id"] = transcript.id
+
         return transcript
