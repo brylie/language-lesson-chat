@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django_htmx.http import HttpResponseClientRedirect
 from minigames.blocks import IframeBlock, StepOrderGameBlock
 from modelcluster.fields import ParentalKey
@@ -145,16 +144,12 @@ class ChatLesson(Page, ClusterableModel):
 
     def serve(self, request: HttpRequest) -> HttpResponse:
         if request.method == "GET" and START_OVER_PARAM in request.GET:
-            self.reset_lesson_progress(request)
-            self.manage_transcript(request, create_new=True)
+            self.handle_start_over(request)
 
         if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
             return self.render_summary_page(request)
 
         if request.method == "POST":
-            if "start_over" in request.POST:
-                return self.handle_start_over(request)
-
             return self.handle_chat_message(request)
 
         return super().serve(request)
@@ -221,8 +216,6 @@ class ChatLesson(Page, ClusterableModel):
                 "transcript_id": new_transcript.id,
             }
         )
-        reset_response = render_to_string("lessons/combined_htmx_response.html", context)
-        return HttpResponse(reset_response)
 
     def reset_lesson_progress(self, request: HttpRequest):
         request.session["conversation_history"] = []
