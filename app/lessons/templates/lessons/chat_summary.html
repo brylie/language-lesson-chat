@@ -5,33 +5,33 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">Lesson Summary: {{ page.title }}</h1>
-            
-            <section aria-labelledby="key-concepts-heading">
-                <h2 id="key-concepts-heading" class="mt-5 mb-3">Key Concepts</h2>
-                <div class="row row-cols-1 row-cols-md-3 g-4">
-                    {% for concept in key_concepts %}
-                        <div class="col">
-                            <div class="card h-100">
-                                {% if concept.image %}
-                                    {% image concept.image width-1024 as concept_image %}
-                                    <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
-                                {% endif %}
-                                <div class="card-body">
-                                    <p class="card-text mb-0 text-center">
-                                        {{ concept.concept }}
-                                    </p>
-                                </div>
-                            </div>
+    <h1 class="mb-4">Lesson Summary: {{ page.title }}</h1>
+    
+    <section aria-labelledby="key-concepts-heading">
+        <h2 id="key-concepts-heading" class="mt-5 mb-3">Key Concepts</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for concept in key_concepts %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if concept.image %}
+                            {% image concept.image width-1024 as concept_image %}
+                            <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
+                        {% endif %}
+                        <div class="card-body">
+                            <p class="card-text mb-0 text-center">
+                                {{ concept.concept }}
+                            </p>
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
-            </section>
+            {% endfor %}
+        </div>
+    </section>
 
+    <div class="row mt-5">
+        <div class="col-lg-7 mb-4 mb-lg-0">
             <section aria-labelledby="chat-transcript-heading">
-                <h2 id="chat-transcript-heading" class="mt-5 mb-3">Chat Transcript</h2>
+                <h2 id="chat-transcript-heading" class="mb-3">Chat Transcript</h2>
                 {% if transcript.messages.all %}
                 <div class="card">
                     <div class="card-body">
@@ -54,14 +54,16 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="alert alert-info mt-5" role="alert">
+                <div class="alert alert-info" role="alert">
                     No chat transcript available.
                 </div>
                 {% endif %}
             </section>
+        </div>
 
+        <div class="col-lg-5">
             <section aria-labelledby="practice-more-heading">
-                <h2 id="practice-more-heading" class="mt-5 mb-4">Practice More</h2>
+                <h2 id="practice-more-heading" class="mb-4">Practice More</h2>
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
