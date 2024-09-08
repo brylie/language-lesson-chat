@@ -1,3 +1,17 @@
+{% if value.description %}
+    <p>{{ value.description }}</p>
+    {% endif %}
+
+    {% if value.instructions %}
+    <p>{{ value.instructions }}</p>
+{% endif %}
+
 <div class="iframe-container">
-    <iframe src="{{ iframe_url }}" allowfullscreen="true" frameborder="0" id="myiframe"></iframe>
+    <iframe 
+        src="{{ iframe_url }}"
+        allowfullscreen="true" 
+        frameborder="0" 
+        id="myiframe"
+        title="{{ value.title }}">
+    </iframe>
 </div>

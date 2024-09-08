@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 from minigames.blocks import IframeBlock, StepOrderGameBlock
@@ -25,6 +25,7 @@ MAX_USER_MESSAGE_LENGTH = 100
 # Define the constant for responses without a key concept
 CHAT_SUMMARY_PARAM = "chat_summary"
 START_OVER_PARAM = "start_over"
+MINIGAME_PARAM = "minigame"
 
 User = get_user_model()
 
@@ -142,12 +143,20 @@ class ChatLesson(Page, ClusterableModel):
 
         return context
 
-    def serve(self, request: HttpRequest) -> HttpResponse:
-        if request.method == "GET" and START_OVER_PARAM in request.GET:
-            return self.handle_start_over(request)
+    def serve(self, request):
+        # Since these parameters are not mutually exclusive,
+        # the order of the checks matters.
+        # In recent versions of Python, the order of items in a dictionary is guaranteed
+        # to be the same as the order they were inserted.
+        get_param_handlers = {
+            CHAT_SUMMARY_PARAM: self.render_summary_page,
+            MINIGAME_PARAM: self.render_minigame,
+            START_OVER_PARAM: self.handle_start_over,
+        }
 
-        if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
-            return self.render_summary_page(request)
+        for param, handler in get_param_handlers.items():
+            if param in request.GET:
+                return handler(request)
 
         if request.method == "POST":
             return self.handle_chat_message(request)
@@ -240,9 +249,25 @@ class ChatLesson(Page, ClusterableModel):
                 "key_concepts": self.key_concepts.all(),
                 "no_key_concept": NO_KEY_CONCEPT,
                 "start_over_param": START_OVER_PARAM,
+                "minigame_param": MINIGAME_PARAM,
             }
         )
         return render(request, "lessons/chat_summary.html", context)
+
+    def render_minigame(self, request):
+        # Convert to 0-based index
+        adjusted_minigame_index = int(request.GET.get(MINIGAME_PARAM, 0)) - 1
+        if 0 <= adjusted_minigame_index < len(self.minigames):
+            minigame = self.minigames[adjusted_minigame_index]
+            context = self.get_context(request)
+            context.update(
+                {
+                    "minigame": minigame,
+                }
+            )
+            return render(request, "minigames/minigame.html", context)
+        else:
+            raise Http404("Minigame not found")
 
     def update_responded_key_concepts(
         self,
