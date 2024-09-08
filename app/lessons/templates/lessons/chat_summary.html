@@ -29,7 +29,7 @@
     </section>
 
     <div class="row mt-5">
-        <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="col-lg-8 mb-4 mb-lg-0">
             <section aria-labelledby="chat-transcript-heading">
                 <h2 id="chat-transcript-heading" class="mb-3">Chat Transcript</h2>
                 {% if transcript.messages.all %}
@@ -61,36 +61,39 @@
             </section>
         </div>
 
-        <div class="col-lg-5">
+        <div class="col-lg-4">
             <section aria-labelledby="practice-more-heading">
                 <h2 id="practice-more-heading" class="mb-4">Practice More</h2>
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
                                 <h3 class="card-title">Restart Chat</h3>
-                                <p class="card-text mb-0">Practice the conversation again to reinforce your learning.</p>
+                                <p class="card-text mb-md-0">Practice the conversation again to reinforce your learning.</p>
                             </div>
-                            <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary">
-                                <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Practice Again
-                            </a>
+                            <div class="col-md-4 d-flex align-items-start justify-content-md-end mt-3 mt-md-0">
+                                <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary w-100">
+                                    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Restart
+                                </a>
+                            </div>
                         </div>
 
                         {% if page.minigames %}
-                            <hr>
                             <h3 class="card-title mt-4">Minigames</h3>
                             <p class="card-text">Reinforce your learning with these interactive games:</p>
                             <ul class="list-group list-group-flush">
                                 {% for block in page.minigames %}
                                     <li class="list-group-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
+                                        <div class="row align-items-start">
+                                            <div class="col-md-8">
                                                 <h4 class="mb-0">{{ block.value.title }}</h4>
                                                 {% if block.value.description %}
-                                                    <p class="mb-0">{{ block.value.description }}</p>
+                                                    <p class="mb-md-0 mt-2">{{ block.value.description }}</p>
                                                 {% endif %}
                                             </div>
-                                            <a href="{{ page.url }}?minigame={{ forloop.counter }}" class="btn btn-success">Play Now</a>
+                                            <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0">
+                                                <a href="{{ page.url }}?minigame={{ forloop.counter }}" class="btn btn-success w-100">Play Now</a>
+                                            </div>
                                         </div>
                                     </li>
                                 {% endfor %}
