@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django_htmx.http import HttpResponseClientRedirect
 from minigames.blocks import IframeBlock, StepOrderGameBlock
@@ -142,12 +142,15 @@ class ChatLesson(Page, ClusterableModel):
 
         return context
 
-    def serve(self, request: HttpRequest) -> HttpResponse:
-        if request.method == "GET" and START_OVER_PARAM in request.GET:
-            return self.handle_start_over(request)
-
-        if request.method == "GET" and CHAT_SUMMARY_PARAM in request.GET:
+    def serve(self, request):
+        if CHAT_SUMMARY_PARAM in request.GET:
             return self.render_summary_page(request)
+
+        if "minigame" in request.GET:
+            return self.render_minigame(request)
+
+        if START_OVER_PARAM in request.GET:
+            return self.handle_start_over(request)
 
         if request.method == "POST":
             return self.handle_chat_message(request)
@@ -243,6 +246,20 @@ class ChatLesson(Page, ClusterableModel):
             }
         )
         return render(request, "lessons/chat_summary.html", context)
+
+    def render_minigame(self, request):
+        minigame_index = int(request.GET.get("minigame", 0)) - 1  # Convert to 0-based index
+        if 0 <= minigame_index < len(self.minigames):
+            minigame = self.minigames[minigame_index]
+            context = self.get_context(request)
+            context.update(
+                {
+                    "minigame": minigame,
+                }
+            )
+            return render(request, "minigames/minigame.html", context)
+        else:
+            raise Http404("Minigame not found")
 
     def update_responded_key_concepts(
         self,

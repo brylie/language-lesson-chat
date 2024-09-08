@@ -1,8 +1,13 @@
 {% load wagtailimages_tags static %}
 
 <div class="step-order-game" id="step-order-game-{{ id }}">
-    <h2 class="mt-2">{{ value.title }}</h2>
+    {% if value.description %}
     <p>{{ value.description }}</p>
+    {% endif %}
+
+    {% if value.instructions %}
+    <p>{{ value.instructions }}</p>
+    {% endif %}
 
     <div id="step-order-game-container-{{ id }}"></div>
 </div>
