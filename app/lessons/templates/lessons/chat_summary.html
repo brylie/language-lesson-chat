@@ -7,92 +7,97 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-4">Summary</h1>
-            <p class="lead">Chat summary for: <strong>{{ page.title }}</strong></p>
+            <h1 class="mb-4">Lesson Summary: {{ page.title }}</h1>
             
-            <h2 class="mt-5 mb-3">Key Concepts</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                {% for concept in key_concepts %}
-                    <div class="col">
-                        <div class="card h-100">
-                            {% if concept.image %}
-                                {% image concept.image width-1024 as concept_image %}
-                                <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
-                            {% endif %}
-                            <div class="card-body">
-                                <p class="card-text mb-0 text-center">
-                                    {{ concept.concept }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            {% if transcript.messages.all %}
-            <h2 class="mt-5 mb-3">Chat Transcript</h2>
-            <div class="card">
-                <div class="card-body">
-                    {% for message in transcript.messages.all %}
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-auto">
-                                {% include "lessons/audio_playback.html" with message_id=message.id %}
-                            </div>
-                            <div class="col">
-                                <strong>{{ message.role|capfirst }}:</strong> 
-                                {{ message.content }}
-                            </div>
-                            {% if message.key_concept %}
-                                <div class="col-auto">
-                                    <span class="badge bg-info">{{ message.key_concept }}</span>
+            <section aria-labelledby="key-concepts-heading">
+                <h2 id="key-concepts-heading" class="mt-5 mb-3">Key Concepts</h2>
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    {% for concept in key_concepts %}
+                        <div class="col">
+                            <div class="card h-100">
+                                {% if concept.image %}
+                                    {% image concept.image width-1024 as concept_image %}
+                                    <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
+                                {% endif %}
+                                <div class="card-body">
+                                    <p class="card-text mb-0 text-center">
+                                        {{ concept.concept }}
+                                    </p>
                                 </div>
-                            {% endif %}
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
-            </div>
-            {% else %}
-            <div class="alert alert-info mt-5" role="alert">
-                No chat transcript available.
-            </div>
-            {% endif %}
+            </section>
 
-            <h2 class="mt-5 mb-4">Practice More</h2>
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="card-title">Restart Chat</h3>
-                            <p class="card-text">Practice the conversation again to reinforce your learning.</p>
-                            <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary btn-lg">
-                                <i class="bi bi-chat-dots-fill"></i> Practice Again
-                            </a>
-                        </div>
+            <section aria-labelledby="chat-transcript-heading">
+                <h2 id="chat-transcript-heading" class="mt-5 mb-3">Chat Transcript</h2>
+                {% if transcript.messages.all %}
+                <div class="card">
+                    <div class="card-body">
+                        {% for message in transcript.messages.all %}
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-auto">
+                                    {% include "lessons/audio_playback.html" with message_id=message.id %}
+                                </div>
+                                <div class="col">
+                                    <strong>{{ message.role|capfirst }}:</strong> 
+                                    {{ message.content }}
+                                </div>
+                                {% if message.key_concept %}
+                                    <div class="col-auto">
+                                        <span class="badge bg-info">{{ message.key_concept }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
-
-                {% if page.minigames %}
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="card-title">Minigames</h3>
-                            <p class="card-text">Reinforce your learning with these interactive games:</p>
-                            <ul class="list-group list-group-flush">
-                                {% for block in page.minigames %}
-                                    <li class="list-group-item">
-                                        <h5>{{ block.value.title }}</h5>
-                                        {% if block.value.description %}
-                                            <p>{{ block.value.description }}</p>
-                                        {% endif %}
-                                        <a href="#" class="btn btn-success">Play Now</a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
+                {% else %}
+                <div class="alert alert-info mt-5" role="alert">
+                    No chat transcript available.
                 </div>
                 {% endif %}
-            </div>
+            </section>
+
+            <section aria-labelledby="practice-more-heading">
+                <h2 id="practice-more-heading" class="mt-5 mb-4">Practice More</h2>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="card-title">Restart Chat</h3>
+                                <p class="card-text">Practice the conversation again to reinforce your learning.</p>
+                                <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Practice Again
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if page.minigames %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="card-title">Minigames</h3>
+                                <p class="card-text">Reinforce your learning with these interactive games:</p>
+                                <ul class="list-group list-group-flush">
+                                    {% for block in page.minigames %}
+                                        <li class="list-group-item">
+                                            <h4>{{ block.value.title }}</h4>
+                                            {% if block.value.description %}
+                                                <p>{{ block.value.description }}</p>
+                                            {% endif %}
+                                            <a href="#" class="btn btn-success">Play Now</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
         </div>
     </div>
 </div>
