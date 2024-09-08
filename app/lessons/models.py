@@ -1,9 +1,11 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django_htmx.http import HttpResponseClientRedirect
 from minigames.blocks import IframeBlock, StepOrderGameBlock
 from modelcluster.fields import ParentalKey
@@ -143,6 +145,7 @@ class ChatLesson(Page, ClusterableModel):
 
         return context
 
+    @method_decorator(login_required)
     def serve(self, request):
         # Since these parameters are not mutually exclusive,
         # the order of the checks matters.
