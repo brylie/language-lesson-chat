@@ -1,8 +1,25 @@
+{% load wagtailcore_tags %}
+
+<style>
+    .iframe-container {
+        display: flex;
+        justify-content: center;
+    }
+
+    iframe {
+        max-width: 100%;
+        width: 70vw;
+        aspect-ratio: 16 / 9;
+        /* Fallback for browsers that don't support aspect-ratio */
+        height: calc(70vw * 0.5625);
+    }
+</style>
+
 {% if value.description %}
     <p>{{ value.description }}</p>
-    {% endif %}
+{% endif %}
 
-    {% if value.instructions %}
+{% if value.instructions %}
     <p>{{ value.instructions }}</p>
 {% endif %}
 
