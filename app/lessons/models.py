@@ -146,7 +146,7 @@ class ChatLesson(Page, ClusterableModel):
         return context
 
     @method_decorator(login_required)
-    def serve(self, request):
+    def serve(self, request: HttpRequest) -> HttpResponse:
         # Since these parameters are not mutually exclusive,
         # the order of the checks matters.
         # In recent versions of Python, the order of items in a dictionary is guaranteed
@@ -231,7 +231,7 @@ class ChatLesson(Page, ClusterableModel):
 
         return render(request, "lessons/chat_lesson.html", context)
 
-    def reset_lesson_progress(self, request: HttpRequest):
+    def reset_lesson_progress(self, request: HttpRequest) -> None:
         request.session["conversation_history"] = []
         request.session["addressed_key_concepts"] = []
         request.session["responded_key_concepts"] = []
@@ -257,7 +257,7 @@ class ChatLesson(Page, ClusterableModel):
         )
         return render(request, "lessons/chat_summary.html", context)
 
-    def render_minigame(self, request):
+    def render_minigame(self, request: HttpRequest) -> HttpResponse:
         # Convert to 0-based index
         adjusted_minigame_index = int(request.GET.get(MINIGAME_PARAM, 0)) - 1
         if 0 <= adjusted_minigame_index < len(self.minigames):
@@ -276,7 +276,7 @@ class ChatLesson(Page, ClusterableModel):
         self,
         request: HttpRequest,
         response_key_concept: str,
-    ):
+    ) -> None:
         """
         Update the list of key concepts that the user has responded to.
         """
