@@ -55,16 +55,43 @@
             <div class="alert alert-info mt-5" role="alert">
                 No chat transcript available.
             </div>
-            <a href="{{ page.url }}" class="btn btn-primary btn-lg">
-                <i class="bi bi-chat-dots-fill"></i> Chat Now
-            </a>
             {% endif %}
 
-            {% include "minigames/minigames.html" with minigames=page.minigames %}
+            <h2 class="mt-5 mb-4">Practice More</h2>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">Restart Chat</h3>
+                            <p class="card-text">Practice the conversation again to reinforce your learning.</p>
+                            <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary btn-lg">
+                                <i class="bi bi-chat-dots-fill"></i> Practice Again
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="mt-5 mb-5">        
-                <h3>Want to practice more?</h3>
-                <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary btn-lg">Practice Again</a>
+                {% if page.minigames %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title">Minigames</h3>
+                            <p class="card-text">Reinforce your learning with these interactive games:</p>
+                            <ul class="list-group list-group-flush">
+                                {% for block in page.minigames %}
+                                    <li class="list-group-item">
+                                        <h5>{{ block.value.title }}</h5>
+                                        {% if block.value.description %}
+                                            <p>{{ block.value.description }}</p>
+                                        {% endif %}
+                                        <a href="#" class="btn btn-success">Play Now</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
