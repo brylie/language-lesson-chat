@@ -5,10 +5,10 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="mb-4">Lesson Summary: {{ page.title }}</h1>
+    <h1 class="mb-4"><i class="bi bi-mortarboard-fill"></i> Lesson Summary: {{ page.title }}</h1>
     
     <section aria-labelledby="key-concepts-heading">
-        <h2 id="key-concepts-heading" class="mt-5 mb-3"><i class="bi bi-lightbulb-fill"></i> Key Concepts</h2>
+        <h2 id="key-concepts-heading" class="mt-5 mb-3"><i class="bi bi-key-fill"></i> Key Concepts</h2>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             {% for concept in key_concepts %}
                 <div class="col">
@@ -29,7 +29,7 @@
     <div class="row mt-5">
         <div class="col-lg-7 mb-4 mb-lg-0">
             <section aria-labelledby="chat-transcript-heading">
-                <h2 id="chat-transcript-heading" class="mb-3"><i class="bi bi-chat-left-text-fill"></i> Chat Transcript</h2>
+                <h2 id="chat-transcript-heading" class="mb-3"><i class="bi bi-chat-quote-fill"></i> Chat Transcript</h2>
                 {% if transcript.messages.all %}
                 <div>
                     <div class="p-2">
@@ -61,37 +61,37 @@
 
         <div class="col-lg-5">
             <section aria-labelledby="practice-more-heading">
-                <h2 id="practice-more-heading" class="mb-4"><i class="bi bi-puzzle-fill"></i> Practice More</h2>
+                <h2 id="practice-more-heading" class="mb-4"><i class="bi bi-clipboard2-check-fill"></i> Practice More</h2>
                 <div>
                     <div class="p-2">
                         <div class="row mb-3">
                             <div class="col-md-8">
-                                <h3 class="card-title"><i class="bi bi-arrow-repeat"></i> Restart Chat</h3>
+                                <h3 class="card-title"><i class="bi bi-arrow-counterclockwise"></i> Restart Chat</h3>
                                 <p class="card-text mb-md-0">Practice the conversation again to reinforce your learning.</p>
                             </div>
                             <div class="col-md-4 d-flex align-items-start justify-content-md-end mt-3 mt-md-0">
                                 <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-primary w-100">
-                                    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Restart
+                                    <i class="bi bi-play-circle-fill" aria-hidden="true"></i> Restart
                                 </a>
                             </div>
                         </div>
 
                         {% if page.minigames %}
-                            <h3 class="card-title mt-4"><i class="bi bi-controller"></i> Minigames</h3>
-                            <p class="card-text">Reinforce your learning with these interactive games:</p>
+                            <h3 class="card-title mt-4"><i class="bi bi-person-workspace"></i> Interactive Exercises</h3>
+                            <p class="card-text">Reinforce your learning with these interactive activities:</p>
                             <ul class="list-group list-group-flush">
                                 {% for block in page.minigames %}
                                     <li class="list-group-item">
                                         <div class="row align-items-start">
                                             <div class="col-md-8">
-                                                <h4 class="mb-0">{{ block.value.title }}</h4>
+                                                <h4 class="mb-0"><i class="bi bi-puzzle-fill"></i> {{ block.value.title }}</h4>
                                                 {% if block.value.description %}
                                                     <p class="mb-md-0 mt-2">{{ block.value.description }}</p>
                                                 {% endif %}
                                             </div>
                                             <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0">
                                                 <a href="{{ page.url }}?{{ minigame_param }}={{ forloop.counter }}" class="btn btn-success w-100">
-                                                    <i class="bi bi-play-fill"></i> Play Now
+                                                    <i class="bi bi-arrow-right-circle-fill"></i> Start
                                                 </a>
                                             </div>
                                         </div>
