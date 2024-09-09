@@ -12,15 +12,13 @@
         <div class="row row-cols-1 row-cols-md-3 g-4">
             {% for concept in key_concepts %}
                 <div class="col">
-                    <div class="h-100">
+                    <div class="card h-100">
                         {% if concept.image %}
                             {% image concept.image width-1024 as concept_image %}
-                            <img src="{{ concept_image.url }}" class="img-fluid rounded" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
+                            <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
                         {% endif %}
-                        <div class="p-2">
-                            <p class="mb-0 text-center">
-                                {{ concept.concept }}
-                            </p>
+                        <div class="card-body">
+                            <p class="card-text text-center mb-0">{{ concept.concept }}</p>
                         </div>
                     </div>
                 </div>
