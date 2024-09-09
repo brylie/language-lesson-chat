@@ -17,7 +17,7 @@
             <button class="btn btn-primary" type="submit">{% translate "Send" %}</button>
         </div>
         <small id="char-count" class="form-text text-muted">
-            {{ current }} / {{ max }}
+            {% blocktranslate %}{{ current }} / {{ max }} characters{% endblocktranslate %}
         </small>
     </form>
 
