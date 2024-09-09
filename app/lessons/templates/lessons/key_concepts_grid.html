@@ -12,18 +12,8 @@
                 <div class="card-body p-2">
                     {% if concept.concept in addressed_key_concepts %}
                     <p class="card-text mb-0 text-center text-light">
-                        
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24" 
-                            height="24" 
-                            fill="white" 
-                            class="animated-checkmark"
-                            viewBox="0 0 16 16">
-                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
-                        </svg> 
-                        
-                        {{ concept.concept }}
+                        <i class="bi bi-check animated-checkmark">
+                        {{ concept.concept }}</i>
                     </p>
                     {% else %}
                     <p class="card-text mb-0 text-center">

@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags i18n %}
 
-{% block title %}{{ page.title }} - {{ minigame.value.title }}{% endblock %}
+{% block title %}{{ page_title }} - {{ minigame_title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h1>{{ page.title }} - {{ minigame.value.title }}</h1>
+    <h1>{{ page_title }} - {{ minigame_title }}</h1>
 
     <div class="minigame-container">
         {% include_block minigame %}
     </div>
 
     <div class="mt-4 mb-4">
-        <a href="{{ page.url }}?chat_summary=true" class="btn btn-primary">Back to Summary</a>
+        <a href="{{ page.url }}?chat_summary=true" class="btn btn-primary">{% translate "Back to Summary" %}</a>
     </div>
 </div>
 {% endblock %}

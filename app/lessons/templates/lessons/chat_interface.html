@@ -1,5 +1,7 @@
+{% load i18n %}
+
 <section id="chat-interface" class="border rounded p-3">
-    <h2>Practice Dialogue</h2>
+    <h2>{% translate "Practice Dialogue" %}</h2>
     <form id="chat-form" hx-post="{{ page.url }}" 
         hx-trigger="submit"
         hx-target="body"
@@ -8,18 +10,20 @@
         {% csrf_token %}
         <div class="input-group">
             <input type="text" name="user_message" id="user-message-input" 
-                class="form-control" placeholder="Type your message..." 
+                class="form-control" placeholder="{% translate 'Type your message...' %}" 
                 maxlength="{{ max_message_length }}"
-                aria-label="Enter your message">
+                aria-label="{% translate 'Enter your message' %}">
             <input type="hidden" name="response_key_concept" id="response-key-concept" value="{{ addressed_key_concept }}">
-            <button class="btn btn-primary" type="submit">Send</button>
+            <button class="btn btn-primary" type="submit">{% translate "Send" %}</button>
         </div>
-        <small id="char-count" class="form-text text-muted">0 / {{ max_message_length }}</small>
+        <small id="char-count" class="form-text text-muted">
+            {% blocktranslate %}{{ current }} / {{ max }} characters{% endblocktranslate %}
+        </small>
     </form>
 
     <div id="suggested-responses-container">
         {% include "lessons/suggested_responses.html" %}
     </div>
 
-    <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-outlineprimary btn-lg">Start Again</a>
+    <a href="{{ page.url }}?{{start_over_param}}=true" class="btn btn-outline-primary btn-lg">{% translate "Start Again" %}</a>
 </section>

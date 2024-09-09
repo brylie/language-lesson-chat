@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags static %}
+{% load wagtailcore_tags wagtailimages_tags static i18n %}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -13,16 +13,16 @@
                 <div class="col-12">
                     <div class="d-flex justify-content-between flex-wrap">
                         <div class="mb-2">
-                            <strong>Location:</strong> {{ page.location }}
+                            <strong>{% translate "Location:" %}</strong> {{ page.location }}
                         </div>
                         <div class="mb-2">
-                            <strong>Language:</strong> {{ page.language }}
+                            <strong>{% translate "Language:" %}</strong> {{ page.language }}
                         </div>
                         <div class="mb-2">
-                            <strong>Difficulty Level:</strong> <span class="badge bg-primary">{{ page.get_difficulty_level_display }}</span>
+                            <strong>{% translate "Difficulty Level:" %}</strong> <span class="badge bg-primary">{{ page.get_difficulty_level_display }}</span>
                         </div>
                         <div class="mb-2">
-                            <strong>Estimated Time:</strong> {{ page.estimated_time }} minutes
+                            <strong>{% translate "Estimated Time:" %}</strong> {% blocktranslate with time=page.estimated_time %}{{ time }} minutes{% endblocktranslate %}
                         </div>
                     </div>
                 </div>
@@ -40,14 +40,15 @@
             {% if page.cover_photo %}
                 <div class="mb-4 position-relative">
                     <div class="image-container">
-                        {% image page.cover_photo width-1200 class="img-fluid rounded w-100" alt="Cover image for {{ page.title }}" %}
+                        {% image page.cover_photo width-1200 as cover_image %}
+                        <img src="{{ cover_image.url }}" class="img-fluid rounded w-100" alt="{% translate 'Cover image for' %} {{ page.title }}" width="{{ cover_image.width }}" height="{{ cover_image.height }}">
                     </div>
                     <div id="chat-bubble" class="chat-bubble">
                         <div id="chat-content"></div>
                     </div>
                     <div id="chat-throbber" class="chat-throbber d-none">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">{% translate "Loading..." %}</span>
                         </div>
                     </div>
                 </div>
@@ -97,7 +98,7 @@
         chatForm.addEventListener('htmx:beforeRequest', function(event) {
             if (userMessageInput.value.length > maxLength) {
                 event.preventDefault();
-                alert(`Message exceeds maximum length of ${maxLength} characters.`);
+                alert("{% blocktranslate %}Message exceeds maximum length of {{ max_message_length }} characters.{% endblocktranslate %}");
                 return;
             }
             userMessageInput.value = '';
