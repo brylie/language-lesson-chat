@@ -32,7 +32,7 @@ class QueryParamBlock(blocks.StructBlock):
 class IframeBlock(BaseMinigameBlock):
     url = blocks.URLBlock(required=True, help_text="URL for the iframe src")
     query_params = blocks.ListBlock(
-        QueryParamBlock(required=False), help_text="Optional query parameters"
+        QueryParamBlock(required=False), help_text="Optional query parameters", default=list, required=False
     )
 
     class Meta:
@@ -43,7 +43,7 @@ class IframeBlock(BaseMinigameBlock):
     def get_context(self, value, parent_context=None):
         context = super().get_context(value, parent_context=parent_context)
         url = value["url"]
-        query_params = value["query_params"]
+        query_params = value.get("query_params", [])
 
         if query_params:
             encoded_params = urlencode({param["key"]: param["value"] for param in query_params})
