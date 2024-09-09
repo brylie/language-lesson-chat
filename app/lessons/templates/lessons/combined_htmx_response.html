@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <input type="hidden" name="response_key_concept" id="response-key-concept" value="{{ addressed_key_concept }}" hx-swap-oob="true">
 
 <div hx-swap-oob="true" id="chat-content">
@@ -13,7 +15,7 @@
         {% if addressed_key_concept in valid_key_concepts and addressed_key_concept != no_key_concept %}
             <div class="key-concept-used">
                 <i class="bi bi-info-circle-fill"></i>
-                Key Concept: {{ addressed_key_concept }}
+                {% translate "Key Concept:" %} {{ addressed_key_concept }}
             </div>
         {% endif %}
     {% endif %}

@@ -1,19 +1,25 @@
+{% load i18n %}
+
 {% if suggestions %}
     <div class="suggestions">
-        <strong>Suggested responses:</strong><br>
+        <strong>{% translate "Suggested responses:" %}</strong><br>
         {% for suggestion in suggestions %}
             <span class="suggestion">{{ suggestion.text }}</span>
         {% endfor %}
     </div>
     <script>
-        const userMessageInput = document.getElementById('user-message-input');
-        const suggestions = document.querySelectorAll('.suggestion');
-        suggestions.forEach(suggestion => {
-            suggestion.addEventListener('click', function() {
-                userMessageInput.value = suggestion.textContent;
-                userMessageInput.focus();
+        /* We use an IIFE here to avoid redefining variables in the global scope */
+        (function() {
+            const userMessageInput = document.getElementById('user-message-input');
+            const suggestions = document.querySelectorAll('.suggestion');
+            suggestions.forEach(suggestion => {
+                suggestion.addEventListener('click', function() {
+                    if (userMessageInput) {
+                        userMessageInput.value = this.textContent;
+                        userMessageInput.focus();
+                    }
+                });
             });
-        });
-        console.log('suggestions loaded');
+        })();
     </script>
 {% endif %}
