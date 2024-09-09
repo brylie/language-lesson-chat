@@ -6,23 +6,22 @@
 {% block content %}
 <div class="container-fluid mt-4">
     <div class="row">
-        <!-- Main content area -->
-        <div class="col-12 col-lg-9 order-2 order-lg-1" id="main-content">
+        <div class="col-12">
             <h1 class="mb-4">{{ page.title }}</h1>
 
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-12">
-                    <div class="d-flex justify-content-between">
-                        <div class="mb-3">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <div class="mb-2">
                             <strong>Location:</strong> {{ page.location }}
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <strong>Language:</strong> {{ page.language }}
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <strong>Difficulty Level:</strong> <span class="badge bg-primary">{{ page.get_difficulty_level_display }}</span>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-2">
                             <strong>Estimated Time:</strong> {{ page.estimated_time }} minutes
                         </div>
                     </div>
@@ -32,7 +31,12 @@
             <div class="mb-4">
                 {{ page.intro|richtext }}
             </div>
+        </div>
+    </div>
 
+    <div class="row">
+        <!-- Main content area -->
+        <div class="col-12 col-lg-9">
             {% if page.cover_photo %}
                 <div class="mb-4 position-relative">
                     <div class="image-container">
@@ -55,7 +59,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="col-12 col-lg-3 order-1 order-lg-2 mb-3 mb-lg-0" id="sidebar">
+        <div class="col-12 col-lg-3" id="sidebar">
             <!-- Key Concepts Grid -->
             <div id="key-concepts-container">
                 {% include "lessons/key_concepts_grid.html" with page=page addressed_key_concepts=request.session.addressed_key_concepts %}
