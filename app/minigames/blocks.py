@@ -48,7 +48,7 @@ class IframeBlock(BaseMinigameBlock):
         url = value["url"]
         query_params = value.get("query_params", None)
 
-        if query_params:
+        if query_params and isinstance(query_params, list):
             encoded_params = urlencode({param["key"]: param["value"] for param in query_params})
             url = f"{url}?{encoded_params}"
 
