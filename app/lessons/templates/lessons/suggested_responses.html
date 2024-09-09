@@ -4,7 +4,9 @@
     <div class="suggestions">
         <strong>{% translate "Suggested responses:" %}</strong><br>
         {% for suggestion in suggestions %}
-            <span class="suggestion">{{ suggestion.text }}</span>
+            <button class="btn btn-default suggestion" tabindex="{{ forloop.counter }}">
+                {{ suggestion.text }}
+            </button>
         {% endfor %}
     </div>
     <script>
