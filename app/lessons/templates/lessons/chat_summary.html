@@ -29,7 +29,7 @@
     </section>
 
     <div class="row mt-5">
-        <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="col-lg-7 mb-4 mb-lg-0">
             <section aria-labelledby="chat-transcript-heading">
                 <h2 id="chat-transcript-heading" class="mb-3"><i class="bi bi-chat-left-text-fill"></i> Chat Transcript</h2>
                 {% if transcript.messages.all %}
@@ -61,7 +61,7 @@
             </section>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <section aria-labelledby="practice-more-heading">
                 <h2 id="practice-more-heading" class="mb-4"><i class="bi bi-puzzle-fill"></i> Practice More</h2>
                 <div>
@@ -92,7 +92,9 @@
                                                 {% endif %}
                                             </div>
                                             <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0">
-                                                <a href="{{ page.url }}?{{ minigame_param }}={{ forloop.counter }}" class="btn btn-success w-100">Play Now</a>
+                                                <a href="{{ page.url }}?{{ minigame_param }}={{ forloop.counter }}" class="btn btn-success w-100">
+                                                    <i class="bi bi-play-fill"></i> Play Now
+                                                </a>
                                             </div>
                                         </div>
                                     </li>
