@@ -8,17 +8,17 @@
     <h1 class="mb-4">Lesson Summary: {{ page.title }}</h1>
     
     <section aria-labelledby="key-concepts-heading">
-        <h2 id="key-concepts-heading" class="mt-5 mb-3">Key Concepts</h2>
+        <h2 id="key-concepts-heading" class="mt-5 mb-3"><i class="bi bi-lightbulb-fill"></i> Key Concepts</h2>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             {% for concept in key_concepts %}
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="h-100">
                         {% if concept.image %}
                             {% image concept.image width-1024 as concept_image %}
-                            <img src="{{ concept_image.url }}" class="card-img-top" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
+                            <img src="{{ concept_image.url }}" class="img-fluid rounded" alt="{{ concept.concept }}" style="object-fit: cover; height: 200px;">
                         {% endif %}
-                        <div class="card-body">
-                            <p class="card-text mb-0 text-center">
+                        <div class="p-2">
+                            <p class="mb-0 text-center">
                                 {{ concept.concept }}
                             </p>
                         </div>
@@ -29,12 +29,12 @@
     </section>
 
     <div class="row mt-5">
-        <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="col-lg-7 mb-4 mb-lg-0">
             <section aria-labelledby="chat-transcript-heading">
-                <h2 id="chat-transcript-heading" class="mb-3">Chat Transcript</h2>
+                <h2 id="chat-transcript-heading" class="mb-3"><i class="bi bi-chat-left-text-fill"></i> Chat Transcript</h2>
                 {% if transcript.messages.all %}
-                <div class="card">
-                    <div class="card-body">
+                <div>
+                    <div class="p-2">
                         {% for message in transcript.messages.all %}
                             <div class="row mb-3 align-items-center">
                                 <div class="col-auto">
@@ -61,14 +61,14 @@
             </section>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <section aria-labelledby="practice-more-heading">
-                <h2 id="practice-more-heading" class="mb-4">Practice More</h2>
-                <div class="card">
-                    <div class="card-body">
+                <h2 id="practice-more-heading" class="mb-4"><i class="bi bi-puzzle-fill"></i> Practice More</h2>
+                <div>
+                    <div class="p-2">
                         <div class="row mb-3">
                             <div class="col-md-8">
-                                <h3 class="card-title">Restart Chat</h3>
+                                <h3 class="card-title"><i class="bi bi-arrow-repeat"></i> Restart Chat</h3>
                                 <p class="card-text mb-md-0">Practice the conversation again to reinforce your learning.</p>
                             </div>
                             <div class="col-md-4 d-flex align-items-start justify-content-md-end mt-3 mt-md-0">
@@ -79,7 +79,7 @@
                         </div>
 
                         {% if page.minigames %}
-                            <h3 class="card-title mt-4">Minigames</h3>
+                            <h3 class="card-title mt-4"><i class="bi bi-controller"></i> Minigames</h3>
                             <p class="card-text">Reinforce your learning with these interactive games:</p>
                             <ul class="list-group list-group-flush">
                                 {% for block in page.minigames %}
@@ -92,7 +92,9 @@
                                                 {% endif %}
                                             </div>
                                             <div class="col-md-4 d-flex justify-content-md-end mt-3 mt-md-0">
-                                                <a href="{{ page.url }}?{{ minigame_param }}={{ forloop.counter }}" class="btn btn-success w-100">Play Now</a>
+                                                <a href="{{ page.url }}?{{ minigame_param }}={{ forloop.counter }}" class="btn btn-success w-100">
+                                                    <i class="bi bi-play-fill"></i> Play Now
+                                                </a>
                                             </div>
                                         </div>
                                     </li>
