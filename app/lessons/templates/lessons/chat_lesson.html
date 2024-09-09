@@ -40,7 +40,8 @@
             {% if page.cover_photo %}
                 <div class="mb-4 position-relative">
                     <div class="image-container">
-                        {% image page.cover_photo width-1200 class="img-fluid rounded w-100" alt=_("Cover image for {{ page.title }}") %}
+                        {% image page.cover_photo width-1200 as cover_image %}
+                        <img src="{{ cover_image.url }}" class="img-fluid rounded w-100" alt="{% translate 'Cover image for' %} {{ page.title }}" width="{{ cover_image.width }}" height="{{ cover_image.height }}">
                     </div>
                     <div id="chat-bubble" class="chat-bubble">
                         <div id="chat-content"></div>
