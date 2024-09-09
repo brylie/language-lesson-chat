@@ -243,10 +243,6 @@ class ChatLesson(Page, ClusterableModel):
         transcript = self.get_or_create_transcript(request)
         context["transcript"] = transcript
 
-        # Clear the transcript ID from the session to ensure a new one is created next time
-        if "transcript_id" in request.session:
-            del request.session["transcript_id"]
-
         context.update(
             {
                 "key_concepts": self.key_concepts.all(),
