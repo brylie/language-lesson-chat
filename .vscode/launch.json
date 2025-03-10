@@ -13,7 +13,8 @@
             ],
             "django": true,
             "autoStartBrowser": false,
-            "program": "${workspaceFolder}/app/manage.py"
+            "program": "${workspaceFolder}/app/manage.py",
+            "cwd": "${workspaceFolder}/app"
         }
     ]
 }

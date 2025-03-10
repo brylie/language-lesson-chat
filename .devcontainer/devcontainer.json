@@ -5,7 +5,7 @@
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
 		"ghcr.io/devcontainers-contrib/features/ruff:1": {},
-		"ghcr.io/devcontainers/features/postgres:1": {
+		"ghcr.io/itsmechlark/features/postgresql:1": {
 			"version": "latest"
 		},
 		"ghcr.io/devcontainers/features/node:1": {}
