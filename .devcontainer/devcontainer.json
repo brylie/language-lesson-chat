@@ -33,11 +33,6 @@
 						"source.organizeImports": "explicit"
 					}
 				},
-				"ruff.lint.run": "onSave",
-				"ruff.format.args": [
-					"--line-length",
-					"100"
-				],
 				"ruff.organizeImports": true
 			}
 		}
