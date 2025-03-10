@@ -13,7 +13,11 @@
             ],
             "django": true,
             "autoStartBrowser": false,
-            "program": "${workspaceFolder}/app/manage.py"
+            "program": "${workspaceFolder}/app/manage.py",
+            "cwd": "${workspaceFolder}/app",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "core.settings.dev"
+            }
         }
     ]
 }
