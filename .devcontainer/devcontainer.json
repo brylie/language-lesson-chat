@@ -1,12 +1,16 @@
 {
-	"name": "Python Development",
+	"name": "Python Django Wagtail Development",
 	"image": "mcr.microsoft.com/devcontainers/python:3",
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
-		"ghcr.io/devcontainers-contrib/features/ruff:1": {}
+		"ghcr.io/devcontainers-contrib/features/ruff:1": {},
+		"ghcr.io/devcontainers/features/postgres:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
-	"postCreateCommand": "pip install pip-tools && pip-compile requirements/requirements.in && pip-compile requirements/dev.in && pip install -r requirements/requirements.txt -r requirements/dev.txt",
+	"postCreateCommand": "pip install pip-tools && pip-compile requirements/requirements.in && pip-compile requirements/dev.in && pip install -r requirements/requirements.txt -r requirements/dev.txt && python manage.py migrate --noinput || echo 'Skipping migrations'",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -18,7 +22,12 @@
 				"ms-python.debugpy",
 				"charliermarsh.ruff",
 				"GitHub.copilot",
-				"GitHub.copilot-chat"
+				"GitHub.copilot-chat",
+				"ms-azuretools.vscode-docker",
+				"esbenp.prettier-vscode",
+				"bradlc.vscode-tailwindcss",
+				"ms-vscode.live-server",
+				"ritwickdey.liveserver"
 			],
 			"settings": {
 				"python.linting.enabled": true,
@@ -38,7 +47,15 @@
 		}
 	},
 	"containerEnv": {
-		"DEBUG": "True"
+		"DEBUG": "True",
+		"DJANGO_SETTINGS_MODULE": "config.settings.dev",
+		"DATABASE_URL": "postgres://postgres:postgres@localhost/wagtail",
+		"WAGTAIL_ADMIN_URL": "admin",
+		"PYTHONPATH": "${containerWorkspaceFolder}"
 	},
+	"forwardPorts": [
+		8000,
+		5432
+	],
 	"remoteUser": "vscode"
 }
