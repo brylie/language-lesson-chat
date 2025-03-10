@@ -1,3 +1,6 @@
 {
-    "terminal.integrated.cwd": "${workspaceFolder}/app"
+    "terminal.integrated.cwd": "${workspaceFolder}/app",
+    "terminal.integrated.env.linux": {
+        "DJANGO_SETTINGS_MODULE": "core.settings.dev"
+    }
 }

@@ -48,7 +48,7 @@
 	},
 	"containerEnv": {
 		"DEBUG": "True",
-		"DJANGO_SETTINGS_MODULE": "config.settings.dev",
+		"DJANGO_SETTINGS_MODULE": "core.settings.dev",
 		"DATABASE_URL": "postgres://postgres:postgres@localhost/wagtail",
 		"WAGTAIL_ADMIN_URL": "admin",
 		"PYTHONPATH": "${containerWorkspaceFolder}"
